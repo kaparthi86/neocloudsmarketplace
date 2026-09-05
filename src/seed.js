@@ -68,7 +68,7 @@ export function seedDemoMarketplace() {
     node_id: nodeA.node_id,
     price_per_hour: '2.85',
     spot: false,
-    tags: ['high-memory', 'nvlink'],
+    tags: ['training', 'high-memory', 'nvlink'],
     network_bandwidth_gbps: 400,
     storage_gb: 2000,
   });
@@ -76,7 +76,7 @@ export function seedDemoMarketplace() {
     node_id: nodeB.node_id,
     price_per_hour: '1.95',
     spot: true,
-    tags: ['spot', 'inference'],
+    tags: ['inference', 'spot'],
     network_bandwidth_gbps: 200,
     storage_gb: 1000,
   });
@@ -84,7 +84,7 @@ export function seedDemoMarketplace() {
     node_id: nodeC.node_id,
     price_per_hour: '1.20',
     spot: false,
-    tags: ['budget', 'fine-tune'],
+    tags: ['fine-tune', 'budget'],
     network_bandwidth_gbps: 100,
     storage_gb: 500,
   });
@@ -104,7 +104,7 @@ export function seedDemoMarketplace() {
     node_id: nodeTpu.node_id,
     price_per_hour: '1.60',
     spot: false,
-    tags: ['tpu', 'training'],
+    tags: ['training', 'tpu'],
     network_bandwidth_gbps: 200,
     storage_gb: 1000,
   });

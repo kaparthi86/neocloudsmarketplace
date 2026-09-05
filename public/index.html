@@ -70,7 +70,17 @@
   .btn-gold { background: var(--gold); color: #000; }
   .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
   .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
-  .btn-filter.active { border-color: var(--gold); color: var(--gold); background: rgba(240,180,41,.1); }
+  .btn-filter.active, .btn-workload.active { border-color: var(--gold); color: var(--gold); background: rgba(240,180,41,.1); }
+
+  /* CATALOG CONTROLS */
+  .catalog-bar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .catalog-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .catalog-label { color: var(--muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; min-width: 72px; }
+  .catalog-row select, .catalog-row input[type="number"] {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; color: var(--text); font-size: 0.8rem;
+  }
+  .catalog-row input[type="number"] { width: 110px; }
 
   /* TABLE */
   table { width: 100%; border-collapse: collapse; }
@@ -156,10 +166,29 @@
       <button class="btn btn-outline btn-sm" onclick="saveKey()">Save Key</button>
       <button class="btn btn-gold btn-sm" onclick="openRegister()">Get API Key</button>
     </div>
-    <div class="badges" style="margin-bottom:16px">
-      <button class="btn btn-outline btn-sm btn-filter active" id="filter-all" onclick="setAccelFilter('')">All</button>
-      <button class="btn btn-outline btn-sm btn-filter" id="filter-gpu" onclick="setAccelFilter('gpu')">GPUs</button>
-      <button class="btn btn-outline btn-sm btn-filter" id="filter-tpu" onclick="setAccelFilter('tpu')">TPUs</button>
+    <div class="catalog-bar" id="catalog-bar">
+      <div class="catalog-row">
+        <span class="catalog-label">Hardware</span>
+        <button class="btn btn-outline btn-sm btn-filter active" id="filter-all" onclick="setAccelFilter('')">All</button>
+        <button class="btn btn-outline btn-sm btn-filter" id="filter-gpu" onclick="setAccelFilter('gpu')">GPUs</button>
+        <button class="btn btn-outline btn-sm btn-filter" id="filter-tpu" onclick="setAccelFilter('tpu')">TPUs</button>
+      </div>
+      <div class="catalog-row">
+        <span class="catalog-label">Workload</span>
+        <button class="btn btn-outline btn-sm btn-workload active" data-workload="" onclick="setWorkloadFilter('')">All</button>
+        <button class="btn btn-outline btn-sm btn-workload" data-workload="training" onclick="setWorkloadFilter('training')">Training</button>
+        <button class="btn btn-outline btn-sm btn-workload" data-workload="inference" onclick="setWorkloadFilter('inference')">Inference</button>
+        <button class="btn btn-outline btn-sm btn-workload" data-workload="fine-tune" onclick="setWorkloadFilter('fine-tune')">Fine-tune</button>
+      </div>
+      <div class="catalog-row">
+        <span class="catalog-label">Price</span>
+        <select id="sort-price" onchange="setPriceSort(this.value)" aria-label="Sort by price">
+          <option value="price_asc">Lowest first</option>
+          <option value="price_desc">Highest first</option>
+          <option value="hardware">By hardware</option>
+        </select>
+        <input type="number" id="max-price" min="0" step="0.1" placeholder="Max $/hr" onchange="setMaxPrice(this.value)" onkeydown="if(event.key==='Enter')setMaxPrice(this.value)" aria-label="Maximum price per hour">
+      </div>
     </div>
     <div class="card-grid" id="listings-grid"></div>
     <p id="listings-empty" style="color:var(--muted);display:none">No listings found.</p>
@@ -269,6 +298,9 @@ let currentListingId = null;
 let currentModelId = null;
 let currentModelName = null;
 let accelFilter = '';
+let workloadFilter = '';
+let priceSort = 'price_asc';
+let maxPrice = '';
 
 // Check ?api_key= param
 const urlParams = new URLSearchParams(location.search);
@@ -381,13 +413,40 @@ function setAccelFilter(kind) {
   loadListings();
 }
 
+function setWorkloadFilter(kind) {
+  workloadFilter = kind;
+  document.querySelectorAll('.btn-workload').forEach(btn => {
+    btn.classList.toggle('active', (btn.dataset.workload || '') === kind);
+  });
+  loadListings();
+}
+
+function setPriceSort(value) {
+  priceSort = value || 'price_asc';
+  loadListings();
+}
+
+function setMaxPrice(value) {
+  maxPrice = value === '' || value == null ? '' : String(value);
+  loadListings();
+}
+
+function listingsQuery() {
+  const params = new URLSearchParams();
+  if (accelFilter) params.set('accelerator_type', accelFilter);
+  if (workloadFilter) params.set('workload', workloadFilter);
+  if (priceSort) params.set('sort', priceSort);
+  if (maxPrice !== '' && !Number.isNaN(Number(maxPrice))) params.set('max_price_per_hour', maxPrice);
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
 async function loadListings() {
   const grid = document.getElementById('listings-grid');
   const empty = document.getElementById('listings-empty');
   grid.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
   try {
-    const q = accelFilter ? `?accelerator_type=${encodeURIComponent(accelFilter)}` : '';
-    const data = await publicApi('/listings' + q);
+    const data = await publicApi('/listings' + listingsQuery());
     if (!Array.isArray(data)) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
     grid.innerHTML = '';
     empty.style.display = data.length === 0 ? 'block' : 'none';
@@ -420,7 +479,7 @@ function listingCard(l) {
     </div>
     <div class="meta">Region: <strong>${esc(l.region)}</strong></div>
     ${l.network_bandwidth_gbps ? `<div class="meta">Network: <strong>${l.network_bandwidth_gbps} Gbps</strong></div>` : ''}
-    ${l.tags && l.tags.length ? `<div class="meta">Tags: ${l.tags.map(t => `<span style="color:var(--blue)">${esc(t)}</span>`).join(', ')}</div>` : ''}
+    ${l.tags && l.tags.length ? `<div class="meta">Workload / tags: ${l.tags.map(t => `<span style="color:var(--blue)">${esc(t)}</span>`).join(', ')}</div>` : ''}
     <div style="margin-top:14px">
       <button class="btn btn-gold btn-sm" ${!l.available ? 'disabled style="opacity:.4"' : ''} onclick="openReserve('${l.listing_id}','${esc(l.gpu_model)}','${l.price_per_hour}')">Reserve (demo)</button>
     </div>
