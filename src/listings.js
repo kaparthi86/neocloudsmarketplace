@@ -77,12 +77,36 @@ export function listListings(filters = {}) {
     results = results.filter(l => wantTags.every(t => l.tags.includes(t)));
   }
 
-  const withAvail = results.map(l => ({ ...l, available: isListingAvailable(l) }));
+  // Workload is a first-class alias for a single catalog tag (training / inference / fine-tune)
+  if (filters.workload) {
+    const workload = String(filters.workload).toLowerCase();
+    results = results.filter(l => Array.isArray(l.tags) && l.tags.includes(workload));
+  }
+
+  let withAvail = results.map(l => ({ ...l, available: isListingAvailable(l) }));
 
   if (filters.available !== undefined) {
     const want = filters.available === 'true' || filters.available === true;
-    return withAvail.filter(l => l.available === want);
+    withAvail = withAvail.filter(l => l.available === want);
   }
+
+  const sort = String(filters.sort || '').toLowerCase();
+  if (sort === 'price_asc') {
+    withAvail.sort((a, b) => {
+      const pa = parsePrice(a.price_per_hour);
+      const pb = parsePrice(b.price_per_hour);
+      return pa < pb ? -1 : pa > pb ? 1 : 0;
+    });
+  } else if (sort === 'price_desc') {
+    withAvail.sort((a, b) => {
+      const pa = parsePrice(a.price_per_hour);
+      const pb = parsePrice(b.price_per_hour);
+      return pa > pb ? -1 : pa < pb ? 1 : 0;
+    });
+  } else if (sort === 'hardware') {
+    withAvail.sort((a, b) => String(a.gpu_model || '').localeCompare(String(b.gpu_model || '')));
+  }
+
   return withAvail;
 }
 
