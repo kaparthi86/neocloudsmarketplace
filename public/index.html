@@ -70,6 +70,7 @@
   .btn-gold { background: var(--gold); color: #000; }
   .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
   .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+  .btn-filter.active { border-color: var(--gold); color: var(--gold); background: rgba(240,180,41,.1); }
 
   /* TABLE */
   table { width: 100%; border-collapse: collapse; }
@@ -156,9 +157,9 @@
       <button class="btn btn-gold btn-sm" onclick="openRegister()">Get API Key</button>
     </div>
     <div class="badges" style="margin-bottom:16px">
-      <button class="btn btn-outline btn-sm" id="filter-all" onclick="setAccelFilter('')">All</button>
-      <button class="btn btn-outline btn-sm" id="filter-gpu" onclick="setAccelFilter('gpu')">GPUs</button>
-      <button class="btn btn-outline btn-sm" id="filter-tpu" onclick="setAccelFilter('tpu')">TPUs</button>
+      <button class="btn btn-outline btn-sm btn-filter active" id="filter-all" onclick="setAccelFilter('')">All</button>
+      <button class="btn btn-outline btn-sm btn-filter" id="filter-gpu" onclick="setAccelFilter('gpu')">GPUs</button>
+      <button class="btn btn-outline btn-sm btn-filter" id="filter-tpu" onclick="setAccelFilter('tpu')">TPUs</button>
     </div>
     <div class="card-grid" id="listings-grid"></div>
     <p id="listings-empty" style="color:var(--muted);display:none">No listings found.</p>
@@ -371,6 +372,12 @@ function toast(msg, isError = false) {
 
 function setAccelFilter(kind) {
   accelFilter = kind;
+  document.querySelectorAll('.btn-filter').forEach(btn => {
+    const match = (kind === '' && btn.id === 'filter-all')
+      || (kind === 'gpu' && btn.id === 'filter-gpu')
+      || (kind === 'tpu' && btn.id === 'filter-tpu');
+    btn.classList.toggle('active', match);
+  });
   loadListings();
 }
 
