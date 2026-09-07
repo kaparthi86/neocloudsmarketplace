@@ -30,6 +30,9 @@ try {
     console.log(`Canonical domain: https://${domain}`);
     if (seedInfo) {
       console.log('SEED_DEMO=1 — demo listings and models loaded.');
+      if (seedInfo.demoCustomerApiKey) {
+        console.log(`Sample customer API key: ${seedInfo.demoCustomerApiKey}`);
+      }
     }
     console.log('Honesty: reservations and inference are simulated; payments are disabled.');
   });

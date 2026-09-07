@@ -7,6 +7,9 @@ import { registerNode, attestNode } from './providers.js';
 import { createListing } from './listings.js';
 import { registerModel } from './inference.js';
 
+/** Stable sample customer key when SEED_DEMO=1 — safe for local/demo flow checks. */
+export const DEMO_CUSTOMER_API_KEY = 'nck_demo_customer_sample_00000001';
+
 let seeded = false;
 
 export function seedDemoMarketplace() {
@@ -28,10 +31,11 @@ export function seedDemoMarketplace() {
     email: 'demo-provider-tpu@neoclouds.local',
     role: 'provider',
   });
-  registerAccount({
+  const demoCustomer = registerAccount({
     name: 'Demo Customer',
     email: 'demo-customer@neoclouds.local',
     role: 'customer',
+    api_key: DEMO_CUSTOMER_API_KEY,
   });
 
   const nodeA = registerNode(providerA.account_id, {
@@ -131,6 +135,20 @@ export function seedDemoMarketplace() {
   return {
     demo_provider_keys_note:
       'Demo provider keys are only returned once at seed time in server logs when SEED_DEMO=1.',
+    demoCustomerApiKey: demoCustomer.api_key,
     providers: [providerA.name, providerB.name, providerC.name],
+  };
+}
+
+/** Public demo config fragment — only when SEED_DEMO=1. */
+export function demoSeedConfig() {
+  if (process.env.SEED_DEMO !== '1') {
+    return { seedDemoEnabled: false };
+  }
+  return {
+    seedDemoEnabled: true,
+    demoCustomerApiKey: DEMO_CUSTOMER_API_KEY,
+    demoCustomerHint:
+      'Sample customer key for trying Reserve / chat (simulated, no charge). Click “Use sample key” or paste it below.',
   };
 }
