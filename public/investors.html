@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Neo Clouds investor pitch — the open exchange for AI accelerators. Raising $100M.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0d1117">
+<title>Investor Pitch — Neo Clouds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0e14;
+    --surface: #121820;
+    --surface-2: #1a222d;
+    --border: #2a3441;
+    --text: #d5dde8;
+    --muted: #8b97a8;
+    --gold: #f0b429;
+    --gold-dim: #b8860b;
+    --blue: #58a6ff;
+    --green: #3fb950;
+    --radius: 14px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background:
+      radial-gradient(ellipse 90% 50% at 10% -10%, rgba(240,180,41,.12), transparent 55%),
+      radial-gradient(ellipse 70% 40% at 90% 5%, rgba(88,166,255,.08), transparent 50%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  .confidential {
+    background: rgba(240,180,41,.1);
+    border-bottom: 1px solid var(--gold-dim);
+    color: var(--gold);
+    text-align: center;
+    padding: 9px 16px;
+    font-size: 0.8rem;
+    letter-spacing: .02em;
+  }
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 58px;
+    background: rgba(18,24,32,.85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo { font-size: 1.15rem; font-weight: 700; color: var(--gold); text-decoration: none; }
+  .nav-links { display: flex; gap: 16px; flex-wrap: wrap; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.82rem; }
+  .nav-links a:hover { color: var(--text); }
+
+  .hero {
+    max-width: 980px; margin: 0 auto;
+    padding: 72px 28px 48px;
+  }
+  .eyebrow {
+    display: inline-flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    color: var(--gold); font-size: 0.8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em; margin-bottom: 18px;
+  }
+  .eyebrow span { color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+  .hero h1 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 400; color: #fff; line-height: 1.08;
+    margin-bottom: 18px; max-width: 16ch;
+  }
+  .hero h1 em { color: var(--gold); font-style: italic; }
+  .tagline {
+    font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+    color: var(--muted); max-width: 540px; margin-bottom: 28px;
+  }
+  .ask-pill {
+    display: inline-flex; align-items: baseline; gap: 10px;
+    background: var(--surface); border: 1px solid var(--gold-dim);
+    border-radius: 999px; padding: 10px 18px; margin-bottom: 28px;
+  }
+  .ask-pill strong { color: var(--gold); font-size: 1.35rem; }
+  .ask-pill span { color: var(--muted); font-size: 0.85rem; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 10px 18px; border-radius: 8px;
+    font-size: 0.875rem; font-weight: 600; text-decoration: none; border: none; cursor: pointer;
+  }
+  .btn-gold { background: var(--gold); color: #000; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+  main { max-width: 980px; margin: 0 auto; padding: 0 28px 80px; }
+  section {
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+  }
+  .sec-label {
+    color: var(--gold); font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px;
+  }
+  h2 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    font-weight: 400; color: #fff; margin-bottom: 14px;
+  }
+  h3 { font-size: 1rem; color: #fff; margin: 22px 0 10px; }
+  p { color: var(--text); margin-bottom: 12px; max-width: 68ch; }
+  .muted { color: var(--muted); }
+  .lede { font-size: 1.08rem; color: var(--muted); max-width: 60ch; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+  @media (max-width: 760px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    nav { padding: 0 16px; }
+    .hero, main { padding-left: 16px; padding-right: 16px; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+  }
+  .card h4 { color: #fff; font-size: 0.95rem; margin-bottom: 6px; }
+  .card p { font-size: 0.88rem; color: var(--muted); margin: 0; max-width: none; }
+
+  table {
+    width: 100%; border-collapse: collapse; margin-top: 16px;
+    font-size: 0.88rem;
+  }
+  th, td {
+    text-align: left; padding: 11px 12px;
+    border-bottom: 1px solid var(--border); vertical-align: top;
+  }
+  th {
+    color: var(--muted); font-weight: 600; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  td strong { color: #fff; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+
+  ol, ul { padding-left: 20px; margin: 10px 0 14px; }
+  li { margin: 7px 0; color: var(--text); }
+  li strong { color: #fff; }
+
+  .callout {
+    background: rgba(240,180,41,.08);
+    border: 1px solid var(--gold-dim);
+    border-radius: var(--radius);
+    padding: 16px 18px; margin-top: 16px;
+  }
+  .callout strong { color: var(--gold); }
+
+  .quote {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+    color: #fff; line-height: 1.35; max-width: 28ch;
+    margin: 8px 0 16px;
+  }
+
+  .funds-amount { color: var(--gold); font-weight: 700; white-space: nowrap; }
+  .vision {
+    background:
+      linear-gradient(135deg, rgba(240,180,41,.12), rgba(88,166,255,.06)),
+      var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 26px;
+  }
+  .vision p {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+    color: #fff; line-height: 1.35; max-width: 34ch; margin: 0;
+  }
+
+  footer {
+    text-align: center; padding: 28px 16px 56px;
+    color: var(--muted); font-size: 0.78rem;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--blue); text-decoration: none; margin: 0 8px; }
+  .fine { margin-top: 10px; font-size: 0.72rem; color: #6a7585; max-width: 620px; margin-left: auto; margin-right: auto; }
+</style>
+</head>
+<body>
+<div class="confidential">Confidential · Fundraising narrative · Not an offer to sell securities</div>
+<nav>
+  <a class="logo" href="/">☁ Neo Clouds</a>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#solution">Solution</a>
+    <a href="#market">Market</a>
+    <a href="#ask">The Ask</a>
+    <a href="/">Marketplace</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Investor pitch <span>· Series B ambition</span></div>
+  <h1>The open exchange for <em>AI accelerators</em></h1>
+  <p class="tagline">Where fragmented GPU and TPU supply meets unbounded model demand — one marketplace, one inference API.</p>
+  <div class="ask-pill"><strong>$100M</strong> <span>to become the default clearing layer for independent AI compute</span></div>
+  <div class="hero-actions">
+    <a class="btn btn-gold" href="#ask">See use of funds</a>
+    <a class="btn btn-outline" href="https://neocloudsmarketplace.com">neocloudsmarketplace.com</a>
+  </div>
+</header>
+
+<main>
+  <section id="one-liner">
+    <div class="sec-label">01 — One-liner</div>
+    <h2>Marketplace + inference layer for AI compute</h2>
+    <p class="lede">Providers list GPUs and TPUs. Builders reserve capacity and call models through an OpenAI-compatible API. We turn idle and independent accelerator supply into liquid, programmatic infrastructure.</p>
+  </section>
+
+  <section id="problem">
+    <div class="sec-label">02 — Problem</div>
+    <h2>Accelerator demand is exploding. Supply is scarce, opaque, and trapped.</h2>
+    <div class="grid-2">
+      <div class="card"><h4>Hyperscaler lock-in</h4><p>Capacity, pricing, and regions controlled by a few clouds.</p></div>
+      <div class="card"><h4>Fragmented neo-clouds</h4><p>Dozens of GPU hosts with no shared discovery, trust, or API.</p></div>
+      <div class="card"><h4>Buyer friction</h4><p>Teams waste weeks chasing quotes, Slack DMs, and one-off contracts.</p></div>
+      <div class="card"><h4>Dead inventory</h4><p>Labs, colos, and smaller hosts hold chips that never reach demand.</p></div>
+    </div>
+    <p class="muted" style="margin-top:16px">Training and inference spend is racing ahead of the systems that price, route, and clear that capacity in an open market.</p>
+  </section>
+
+  <section id="solution">
+    <div class="sec-label">03 — Solution</div>
+    <h2>Neo Clouds = accelerator exchange + inference gateway</h2>
+    <ol>
+      <li><strong>Supply side</strong> — register nodes, attest, list by hardware / region / price / workload</li>
+      <li><strong>Demand side</strong> — browse, reserve hours, run inference via <code>/v1/chat/completions</code></li>
+      <li><strong>Trust layer</strong> — attestation, availability, reputation (roadmap: SLAs, escrow, payouts)</li>
+      <li><strong>Programmatic access</strong> — API keys, OpenAI-compatible interface, usage metering</li>
+    </ol>
+    <div class="callout">
+      <strong>Investor honesty:</strong> early access intentionally simulates reservations and inference until real provider connect and persistence ship. That is the build — not a side note.
+    </div>
+  </section>
+
+  <section id="why-now">
+    <div class="sec-label">04 — Why now</div>
+    <h2>The winners of the last cloud cycle owned regions. This cycle owns liquidity.</h2>
+    <ul>
+      <li><strong>Model economics force multi-cloud</strong> — no single vendor covers every training and inference profile</li>
+      <li><strong>Neo-cloud proliferation</strong> — independent fleets need distribution beyond their own landing pages</li>
+      <li><strong>API standardization</strong> — OpenAI-compatible endpoints made inference portable; compute should be next</li>
+      <li><strong>Capital intensity</strong> — chip owners need utilization; builders need elastic access without owning clusters</li>
+      <li><strong>Sovereignty</strong> — region-aware multi-provider routing is becoming a requirement</li>
+    </ul>
+  </section>
+
+  <section id="market">
+    <div class="sec-label">05 — Market</div>
+    <h2>AI accelerator marketplace + inference exchange</h2>
+    <table>
+      <thead><tr><th>Layer</th><th>Framing</th><th>Directional size</th></tr></thead>
+      <tbody>
+        <tr><td><strong>TAM</strong></td><td>Global AI infrastructure / GPU cloud spend</td><td>Hundreds of billions over the decade as AI capex compounds</td></tr>
+        <tr><td><strong>SAM</strong></td><td>Third-party / neo-cloud GPU &amp; TPU rental + inference APIs</td><td>Tens of billions — outside captive hyperscaler clusters</td></tr>
+        <tr><td><strong>SOM (5 yr)</strong></td><td>Take-rate on cleared GMV + inference margin</td><td>Path to <strong>$1B+ revenue</strong> if Neo Clouds is the default clearing layer</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:14px">Comparable power laws: AWS for VMs · Stripe for payments · OpenAI API for models — each won by becoming the default interface over messy supply.</p>
+  </section>
+
+  <section id="product">
+    <div class="sec-label">06 — Product wedge</div>
+    <h2>Any accelerator inventory. One API. Global price discovery.</h2>
+    <table>
+      <thead><tr><th>Surface</th><th>What ships</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Catalog</strong></td><td>Browse by hardware, workload, price</td><td>Buyers shop the way they think</td></tr>
+        <tr><td><strong>Reserve</strong></td><td>Hourly reservations against listings</td><td>Clears spare capacity</td></tr>
+        <tr><td><strong>Inference</strong></td><td>OpenAI-compatible chat completions</td><td>Meet builders where their code already is</td></tr>
+        <tr><td><strong>Provider pilot</strong></td><td>Waitlist + inventory intake</td><td>Seed real supply without fake promises</td></tr>
+        <tr><td><strong>Roadmap</strong></td><td>Real attest → provision → payouts → SLAs</td><td>Turn demo liquidity into production liquidity</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="model">
+    <div class="sec-label">07 — Business model</div>
+    <h2>Take rate on cleared compute. Margin on inference. Enterprise on trust.</h2>
+    <div class="grid-3">
+      <div class="card"><h4>Primary</h4><p>Marketplace take rate on reserved compute — target <strong style="color:var(--gold)">10–20%</strong> of GMV as settlement matures.</p></div>
+      <div class="card"><h4>Secondary</h4><p>Inference margin / routing fee on managed model endpoints.</p></div>
+      <div class="card"><h4>Tertiary</h4><p>Enterprise private exchanges, compliance packs, priority matching.</p></div>
+    </div>
+    <ul style="margin-top:16px">
+      <li>Low marginal cost to list another provider node</li>
+      <li>High switching cost once workloads and API keys sit on Neo Clouds</li>
+      <li>Network effects: more supply → better price/availability → more demand → more provider pull</li>
+    </ul>
+  </section>
+
+  <section id="gtm">
+    <div class="sec-label">08 — Go-to-market</div>
+    <h2>Supply-led now. Programmatic forever.</h2>
+    <div class="grid-2">
+      <div class="card"><h4>Phase 1 — Supply-led</h4><p>Warm intros → provider pilot pack → inventory waitlist → dry-run API listings.</p></div>
+      <div class="card"><h4>Phase 2 — Demand density</h4><p>ML startups and fine-tune shops: cheapest attested H100 in region X via one API.</p></div>
+      <div class="card"><h4>Phase 3 — Programmatic</h4><p>Agents and orchestrators book capacity via API — Neo Clouds becomes plumbing.</p></div>
+      <div class="card"><h4>Phase 4 — Enterprise &amp; sovereign</h4><p>Private marketplaces for labs, nations, and regulated industries.</p></div>
+    </div>
+  </section>
+
+  <section id="competition">
+    <div class="sec-label">09 — Competition</div>
+    <h2>Not another GPU cloud. The exchange layer above many clouds.</h2>
+    <table>
+      <thead><tr><th>Player</th><th>What they are</th><th>Neo Clouds angle</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Hyperscalers</strong></td><td>Captive capacity</td><td>Aggregate everyone else; stay neutral</td></tr>
+        <tr><td><strong>Vertical GPU clouds</strong></td><td>Own fleets</td><td>Partners or competitors — we win as the open exchange</td></tr>
+        <tr><td><strong>Peer marketplaces</strong></td><td>Vast / RunPod-class rental</td><td>Add trust, workload catalog, inference as first-class</td></tr>
+        <tr><td><strong>Slack / job boards</strong></td><td>Opaque brokerage</td><td>Productize price discovery</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="moat">
+    <div class="sec-label">10 — Moat</div>
+    <h2>What $100M buys</h2>
+    <p class="quote">Software is copyable. Two-sided liquidity + trust + settlement is not.</p>
+    <ol>
+      <li><strong>Liquidity</strong> — density of attested supply in every hot region/SKU</li>
+      <li><strong>Trust graph</strong> — attestation, completion rates, SLA bonds, reputation</li>
+      <li><strong>Routing intelligence</strong> — workload → hardware → price → reliability</li>
+      <li><strong>Developer default</strong> — OpenAI-compatible + SDKs</li>
+      <li><strong>Settlement rails</strong> — escrow, payouts, dispute, invoicing</li>
+    </ol>
+  </section>
+
+  <section id="traction">
+    <div class="sec-label">11 — Traction &amp; stage</div>
+    <h2>Truthful early access</h2>
+    <table>
+      <thead><tr><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Product</strong></td><td>Live marketplace at neocloudsmarketplace.com</td></tr>
+        <tr><td><strong>Mode</strong></td><td>Early access — simulated reserve/inference until real hardware connect</td></tr>
+        <tr><td><strong>Supply motion</strong></td><td>Provider pilot waitlist + API dry-run path</td></tr>
+        <tr><td><strong>Code</strong></td><td>Standalone product, public API, catalog by hardware / workload / price</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:14px">Insert before close: waitlist size, LOIs, committed GPU-hours, design partners, weekly GMV once live.</p>
+  </section>
+
+  <section id="ask">
+    <div class="sec-label">12 — The ask</div>
+    <h2>Raising $100M to become the default accelerator exchange</h2>
+    <p class="lede">Series B-scale growth capital for supply density, real provision, inference routing, and settlement.</p>
+    <table>
+      <thead><tr><th>Allocation</th><th>Amount</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Supply &amp; trust</strong></td><td class="funds-amount">$30M</td><td>Node agents, attestation, SLAs, provider success, geographic density</td></tr>
+        <tr><td><strong>Liquidity &amp; GTM</strong></td><td class="funds-amount">$25M</td><td>Provider acquisition, buyer growth, partner channel, AI infra brand</td></tr>
+        <tr><td><strong>Inference &amp; platform</strong></td><td class="funds-amount">$20M</td><td>Routing, scheduling, multi-node packs, enterprise private exchanges</td></tr>
+        <tr><td><strong>Settlement &amp; risk</strong></td><td class="funds-amount">$15M</td><td>Payments, escrow, fraud, compliance, insurance partnerships</td></tr>
+        <tr><td><strong>Team &amp; ops</strong></td><td class="funds-amount">$10M</td><td>Infra, security, support, international</td></tr>
+      </tbody>
+    </table>
+    <h3>Winning in 36 months</h3>
+    <ul>
+      <li>Meaningful share of <strong>independent</strong> GPU/TPU rental GMV</li>
+      <li>Thousands of attested nodes across top regions</li>
+      <li>Inference API as a default backend for emerging AI apps</li>
+      <li>Clear path to category-defining revenue and strategic options</li>
+    </ul>
+  </section>
+
+  <section id="vision">
+    <div class="sec-label">13 — Vision</div>
+    <div class="vision">
+      <p>Every accelerator on Earth — from a university TPU slice to a multi-rack H100 pod — should be discoverable, reservable, and callable through one open market.</p>
+    </div>
+  </section>
+
+  <section id="narrative">
+    <div class="sec-label">14 — 30-second narrative</div>
+    <h2>For partners and investors</h2>
+    <p class="lede">AI is starving for accelerators. Supply is scattered across neo-clouds, labs, and colos that buyers can’t efficiently find or trust. Neo Clouds is the open marketplace and OpenAI-compatible inference layer that clears that supply — hardware, workload, and price in one catalog. We’re raising $100M to turn early-access liquidity into the default exchange for AI compute.</p>
+  </section>
+
+  <section id="risks">
+    <div class="sec-label">Appendix — Risks</div>
+    <h2>Investor-grade honesty</h2>
+    <ul>
+      <li><strong>Chicken-and-egg</strong> until real provision works — mitigated by pilot waitlist + dry-run API</li>
+      <li><strong>Hyperscaler response</strong> — stay neutral exchange; don’t try to out-capex AWS</li>
+      <li><strong>Trust / fraud on supply</strong> — attestation + settlement is core R&amp;D, not a checkbox</li>
+      <li><strong>Commodity pricing pressure</strong> — win on liquidity, routing, and developer UX, not only $/hr</li>
+    </ul>
+  </section>
+
+  <section id="contact">
+    <div class="sec-label">Contact</div>
+    <h2>Next step</h2>
+    <p><strong>Product:</strong> <a href="https://neocloudsmarketplace.com" style="color:var(--blue)">neocloudsmarketplace.com</a></p>
+    <p><strong>Provider pilot:</strong> <a href="/providers.html" style="color:var(--blue)">/providers.html</a></p>
+    <p><strong>Deck contact:</strong> <span class="muted">[add founder email]</span></p>
+    <div class="hero-actions" style="margin-top:18px">
+      <a class="btn btn-gold" href="/providers.html">Provider pilot pack</a>
+      <a class="btn btn-outline" href="/">Open marketplace</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Neo Clouds · Confidential investor narrative · Raising $100M</p>
+  <p><a href="/">Home</a> · <a href="/providers.html">Providers</a> · <a href="/privacy.html">Privacy</a></p>
+  <p class="fine">This page is a fundraising narrative. It does not constitute an offer to sell securities. Traction figures must be updated with live metrics before investor distribution.</p>
+</footer>
+</body>
+</html>

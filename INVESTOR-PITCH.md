@@ -1,5 +1,6 @@
 # Neo Clouds — Investor Pitch
 
+**HTML deck:** [/investors.html](./public/investors.html) · live path `https://neocloudsmarketplace.com/investors.html`  
 **Confidential** · Raising **$100M** · Series B ambition  
 **Live:** [neocloudsmarketplace.com](https://neocloudsmarketplace.com)
 
