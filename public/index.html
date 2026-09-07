@@ -234,7 +234,7 @@
 <div class="modal-overlay hidden" id="register-modal">
   <div class="modal">
     <h2>Get a free API key</h2>
-    <p class="notice">Keys are free. Reservations and inference are simulated. We do not collect a payment method.</p>
+    <p class="notice" id="register-notice">Keys are free. Reservations and inference are simulated. We do not collect a payment method.</p>
     <div class="form-group">
       <label>Name</label>
       <input type="text" id="reg-name" placeholder="Your name">
@@ -302,6 +302,8 @@ let accelFilter = '';
 let workloadFilter = '';
 let priceSort = 'price_asc';
 let maxPrice = '';
+let pendingAction = null; // { type: 'reserve'|'chat', ... }
+const DEFAULT_REGISTER_NOTICE = 'Keys are free. Reservations and inference are simulated. We do not collect a payment method.';
 
 // Check ?api_key= param
 const urlParams = new URLSearchParams(location.search);
@@ -312,6 +314,7 @@ if (urlParams.get('api_key')) {
 if (API_KEY) document.getElementById('api-key-input').value = API_KEY;
 
 loadSiteConfig();
+validateStoredKey();
 
 // ---------------------------------------------------------------------------
 // Routing
@@ -348,7 +351,78 @@ async function api(method, path, body) {
   if (API_KEY) opts.headers['Authorization'] = `Bearer ${API_KEY}`;
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch('/v1' + path, opts);
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.message || data.error || `Request failed (${res.status})`);
+    err.status = res.status;
+    err.code = data.error;
+    err.body = data;
+    throw err;
+  }
+  return data;
+}
+
+function clearApiKey() {
+  API_KEY = '';
+  localStorage.removeItem('neo_api_key');
+  const input = document.getElementById('api-key-input');
+  if (input) input.value = '';
+}
+
+async function validateStoredKey() {
+  if (!API_KEY) return;
+  try {
+    await api('GET', '/auth/me');
+  } catch (e) {
+    if (e.status === 401) {
+      clearApiKey();
+      toast('Saved API key is no longer valid (server may have restarted). Get a new free key to reserve.', true);
+    }
+  }
+}
+
+function promptForCustomerKey(message) {
+  const notice = document.getElementById('register-notice');
+  if (notice) notice.textContent = message || DEFAULT_REGISTER_NOTICE;
+  const role = document.getElementById('reg-role');
+  if (role) role.value = 'customer';
+  openRegister();
+}
+
+async function ensureCustomerKey(action) {
+  if (!API_KEY) {
+    pendingAction = action || null;
+    promptForCustomerKey('Create a free customer API key to reserve or chat. Demo only — no charge.');
+    return false;
+  }
+  try {
+    const me = await api('GET', '/auth/me');
+    if (me.role !== 'customer') {
+      pendingAction = action || null;
+      promptForCustomerKey('Reservations need a customer key (nck_…). Register as Customer — provider keys cannot reserve.');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    if (e.status === 401) clearApiKey();
+    pendingAction = action || null;
+    promptForCustomerKey('Your API key is missing or invalid. Get a free customer key to continue (demo, no charge).');
+    return false;
+  }
+}
+
+async function resumePendingAction() {
+  const action = pendingAction;
+  pendingAction = null;
+  if (!action) return;
+  if (action.type === 'reserve') {
+    currentListingId = action.listingId;
+    document.getElementById('reserve-info').textContent = action.info || '';
+    document.getElementById('reserve-hours').value = action.hours || 1;
+    document.getElementById('reserve-modal').classList.remove('hidden');
+  } else if (action.type === 'chat') {
+    openChat(action.modelId, action.modelName);
+  }
 }
 
 async function loadSiteConfig() {
@@ -379,16 +453,32 @@ async function submitRegister() {
     API_KEY = data.api_key;
     localStorage.setItem('neo_api_key', API_KEY);
     document.getElementById('api-key-input').value = API_KEY;
+    const notice = document.getElementById('register-notice');
+    if (notice) notice.textContent = DEFAULT_REGISTER_NOTICE;
     closeModal('register-modal');
     toast(`Key saved (${role}). Keep it secret.`);
+    if (role === 'customer') await resumePendingAction();
+    else pendingAction = null;
   } catch (e) { toast(e.message, true); }
 }
 
-function saveKey() {
+async function saveKey() {
   API_KEY = document.getElementById('api-key-input').value.trim();
+  if (!API_KEY) {
+    clearApiKey();
+    toast('API key cleared', false);
+    return;
+  }
   localStorage.setItem('neo_api_key', API_KEY);
-  toast('API key saved', false);
-  loadListings();
+  try {
+    const me = await api('GET', '/auth/me');
+    toast(`API key saved (${me.role})`, false);
+    if (me.role === 'customer') await resumePendingAction();
+  } catch (e) {
+    clearApiKey();
+    toast('Invalid API key — get a new free key (server may have restarted).', true);
+    promptForCustomerKey('Saved key was invalid. Register for a free customer key.');
+  }
 }
 
 function toast(msg, isError = false) {
@@ -488,21 +578,47 @@ function listingCard(l) {
   return div;
 }
 
-function openReserve(listingId, gpuModel, price) {
+async function openReserve(listingId, gpuModel, price) {
+  const info = `${gpuModel} · $${price}/hr`;
+  const ok = await ensureCustomerKey({ type: 'reserve', listingId, info, hours: 1 });
+  if (!ok) return;
   currentListingId = listingId;
-  document.getElementById('reserve-info').textContent = `${gpuModel} · $${price}/hr`;
+  document.getElementById('reserve-info').textContent = info;
   document.getElementById('reserve-modal').classList.remove('hidden');
 }
 
 async function submitReservation() {
-  const hours = parseInt(document.getElementById('reserve-hours').value);
+  const hours = parseInt(document.getElementById('reserve-hours').value, 10);
+  const ok = await ensureCustomerKey({
+    type: 'reserve',
+    listingId: currentListingId,
+    info: document.getElementById('reserve-info').textContent,
+    hours,
+  });
+  if (!ok) {
+    closeModal('reserve-modal');
+    return;
+  }
   try {
     const r = await api('POST', '/reservations', { listing_id: currentListingId, hours });
-    if (r.error) throw new Error(r.message || r.error);
     closeModal('reserve-modal');
     toast(`Simulated reservation saved (${r.reservation_id}). You were not charged.`);
     loadListings();
-  } catch(e) { toast(e.message, true); }
+  } catch (e) {
+    if (e.status === 401) {
+      clearApiKey();
+      closeModal('reserve-modal');
+      pendingAction = {
+        type: 'reserve',
+        listingId: currentListingId,
+        info: document.getElementById('reserve-info').textContent,
+        hours,
+      };
+      promptForCustomerKey('API key missing or invalid. Get a free customer key to reserve (demo, no charge).');
+      return;
+    }
+    toast(e.message, true);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -541,7 +657,9 @@ function modelCard(m) {
   return div;
 }
 
-function openChat(modelId, modelName) {
+async function openChat(modelId, modelName) {
+  const ok = await ensureCustomerKey({ type: 'chat', modelId, modelName });
+  if (!ok) return;
   currentModelId = modelId;
   currentModelName = modelName;
   document.getElementById('chat-model-name').textContent = modelName;
@@ -554,6 +672,13 @@ async function sendChat() {
   const panel = document.getElementById('chat-panel');
   const msg = input.value.trim();
   if (!msg) return;
+
+  const ok = await ensureCustomerKey({ type: 'chat', modelId: currentModelId, modelName: currentModelName });
+  if (!ok) {
+    closeModal('chat-modal');
+    return;
+  }
+
   input.value = '';
 
   appendChat(panel, 'user', msg);
@@ -565,6 +690,14 @@ async function sendChat() {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
       body: JSON.stringify({ model: currentModelName, messages: [{ role: 'user', content: msg }], stream: true }),
     });
+
+    if (res.status === 401) {
+      clearApiKey();
+      closeModal('chat-modal');
+      pendingAction = { type: 'chat', modelId: currentModelId, modelName: currentModelName };
+      promptForCustomerKey('API key missing or invalid. Get a free customer key to chat (demo, no charge).');
+      return;
+    }
 
     if (!res.ok) { assistantEl.querySelector('.content').textContent = 'Error'; return; }
 
