@@ -130,7 +130,7 @@ Browser:
 
 Render → `SEED_DEMO=0` → redeploy.
 
-Provider flow: **Get API Key (Provider)** → register node → attest → listing → optional model.
+Provider flow: share **[/providers.html](./public/providers.html)** (waitlist + inventory). Dry-run API: **Get API Key (Provider)** → register node → attest → listing → optional model. See [PROVIDER-PILOT.md](./PROVIDER-PILOT.md).
 
 ---
 

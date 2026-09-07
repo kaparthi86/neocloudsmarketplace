@@ -12,6 +12,7 @@ export const store = {
   reservations: new Map(),  // reservation_id -> reservation
   models: new Map(),        // model_id -> model
   usageEvents: [],          // append-only
+  providerPilot: [],        // provider waitlist / inventory interest (pilot)
 };
 
 // ---------------------------------------------------------------------------

@@ -15,6 +15,7 @@ import { createReservation, listReservations, getReservation, cancelReservation,
 import { registerModel, listModels, deleteModel, chatCompletionSync, chatCompletionStream, queryUsage, usageSummary } from './inference.js';
 import { getStats, getLeaderboard } from './stats.js';
 import { healthPayload, betaBannerText } from './health.js';
+import { submitProviderPilot, providerPilotSummary } from './provider-pilot.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -286,6 +287,20 @@ export function buildRouter() {
     } catch (e) { handleError(res, e); }
   });
 
+  // Provider pilot waitlist (public — interest + inventory only)
+  router.post('/v1/provider-pilot', async (req, res) => {
+    try {
+      const body = await readBody(req);
+      created(res, submitProviderPilot(body));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.get('/v1/provider-pilot', async (req, res) => {
+    try {
+      ok(res, providerPilotSummary());
+    } catch (e) { handleError(res, e); }
+  });
+
   return router;
 }
 
@@ -319,6 +334,9 @@ export function createMarketplaceServer() {
     }
     if (pathname === '/terms.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'terms.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/providers.html' || pathname === '/provider-pilot.html') {
+      return serveStatic(res, join(PUBLIC_DIR, 'providers.html'), 'text/html; charset=utf-8');
     }
     if (pathname === '/manifest.webmanifest') {
       return serveStatic(res, join(PUBLIC_DIR, 'manifest.webmanifest'), 'application/manifest+json');
