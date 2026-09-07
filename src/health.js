@@ -37,6 +37,7 @@ export function healthPayload() {
     accounts: store.accounts.size,
     listings: store.listings.size,
     models: store.models.size,
+    providerPilotWaitlist: store.providerPilot.length,
     canonicalDomain: process.env.CANONICAL_DOMAIN || 'neocloudsmarketplace.com',
   };
   if (prod) return base;

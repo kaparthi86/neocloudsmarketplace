@@ -571,4 +571,50 @@ describe('7 – Launch readiness', async () => {
     assert.equal(r.status, 200);
     assert.ok(Array.isArray(r.body));
   });
+
+  it('serves provider pilot page', async () => {
+    const res = await fetch(`${base(server)}/providers.html`);
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.match(html, /Provider pilot/i);
+    assert.match(html, /provider-pilot/i);
+  });
+
+  it('accepts provider pilot waitlist submissions', async () => {
+    const before = await req(server, 'GET', '/v1/provider-pilot');
+    assert.equal(before.status, 200);
+    assert.equal(before.body.waitlist, true);
+    assert.equal(before.body.paymentsEnabled, false);
+    assert.equal(before.body.liveProvisioning, false);
+
+    const r = await req(server, 'POST', '/v1/provider-pilot', {
+      name: 'Ops Lead',
+      email: `ops-${Date.now()}@atlas.test`,
+      company: 'Atlas GPU',
+      region: 'us-east-1',
+      accelerator_type: 'gpu',
+      accelerator_model: 'H100-SXM5-80GB',
+      accelerator_count: 8,
+      memory_gb_per_chip: 80,
+      interconnect: 'NVLink',
+      price_per_hour: '2.85',
+      workloads: ['training', 'inference'],
+      notes: 'Pilot inventory only',
+    });
+    assert.equal(r.status, 201);
+    assert.ok(r.body.interest_id);
+    assert.equal(r.body.status, 'waitlist');
+    assert.match(r.body.message, /waitlist|follow up/i);
+
+    const after = await req(server, 'GET', '/v1/provider-pilot');
+    assert.equal(after.body.count, before.body.count + 1);
+
+    const health = await req(server, 'GET', '/api/health');
+    assert.ok(health.body.providerPilotWaitlist >= 1);
+  });
+
+  it('rejects provider pilot without email', async () => {
+    const r = await req(server, 'POST', '/v1/provider-pilot', { name: 'No Email' });
+    assert.equal(r.status, 400);
+  });
 });

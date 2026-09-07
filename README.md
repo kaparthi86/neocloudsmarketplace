@@ -31,6 +31,7 @@ npm start
 - GPU listings, reservations, provider nodes + attestation
 - OpenAI-compatible `/v1/chat/completions` with streaming
 - Public browse; API keys for reserve and inference
+- Provider pilot waitlist: [/providers.html](./public/providers.html) · [PROVIDER-PILOT.md](./PROVIDER-PILOT.md)
 - Privacy, Terms, health check, beta banner
 
 ## API
