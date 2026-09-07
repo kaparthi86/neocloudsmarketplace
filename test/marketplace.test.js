@@ -184,6 +184,33 @@ describe('3 – Listings', async () => {
     assert.ok(r.body.every(l => l.available === true));
   });
 
+  it('filters by workload tag and sorts by price', async () => {
+    const n2 = await req(server, 'POST', '/v1/nodes', {
+      hostname: 'gpu-workload.example.com', gpu_model: 'H100-SXM5-80GB', gpu_count: 2,
+      vram_gb_per_gpu: 80, region: 'us-west-2', interconnect: 'NVLink',
+    }, providerKey);
+    await req(server, 'POST', `/v1/nodes/${n2.body.node_id}/attest`, {}, providerKey);
+    await req(server, 'POST', '/v1/listings', {
+      node_id: n2.body.node_id, price_per_hour: '1.10', tags: ['training'],
+    }, providerKey);
+
+    const byWorkload = await req(server, 'GET', '/v1/listings?workload=training', undefined, customerKey);
+    assert.equal(byWorkload.status, 200);
+    assert.ok(byWorkload.body.length >= 1);
+    assert.ok(byWorkload.body.every(l => l.tags.includes('training')));
+
+    const sorted = await req(server, 'GET', '/v1/listings?sort=price_asc', undefined, customerKey);
+    assert.equal(sorted.status, 200);
+    assert.ok(sorted.body.length >= 2);
+    for (let i = 1; i < sorted.body.length; i++) {
+      assert.ok(Number(sorted.body[i - 1].price_per_hour) <= Number(sorted.body[i].price_per_hour));
+    }
+
+    const capped = await req(server, 'GET', '/v1/listings?max_price_per_hour=2.00&sort=price_desc', undefined, customerKey);
+    assert.equal(capped.status, 200);
+    assert.ok(capped.body.every(l => Number(l.price_per_hour) <= 2));
+  });
+
   it('GET listing increments view_count', async () => {
     const r1 = await req(server, 'GET', `/v1/listings/${listingId}`, undefined, customerKey);
     const r2 = await req(server, 'GET', `/v1/listings/${listingId}`, undefined, customerKey);
