@@ -338,6 +338,9 @@ export function createMarketplaceServer() {
     if (pathname === '/providers.html' || pathname === '/provider-pilot.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'providers.html'), 'text/html; charset=utf-8');
     }
+    if (pathname === '/investors.html' || pathname === '/investor-pitch.html') {
+      return serveStatic(res, join(PUBLIC_DIR, 'investors.html'), 'text/html; charset=utf-8');
+    }
     if (pathname === '/manifest.webmanifest') {
       return serveStatic(res, join(PUBLIC_DIR, 'manifest.webmanifest'), 'application/manifest+json');
     }

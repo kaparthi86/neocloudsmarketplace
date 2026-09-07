@@ -580,6 +580,14 @@ describe('7 – Launch readiness', async () => {
     assert.match(html, /provider-pilot/i);
   });
 
+  it('serves investor pitch page', async () => {
+    const res = await fetch(`${base(server)}/investors.html`);
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.match(html, /Investor Pitch/i);
+    assert.match(html, /\$100M/);
+  });
+
   it('accepts provider pilot waitlist submissions', async () => {
     const before = await req(server, 'GET', '/v1/provider-pilot');
     assert.equal(before.status, 200);
