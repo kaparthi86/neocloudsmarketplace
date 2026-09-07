@@ -10,13 +10,18 @@ function generateKey(role) {
   return `${prefix}_${randomBytes(16).toString('hex')}`;
 }
 
-export function registerAccount({ name, email, role }) {
+export function registerAccount({ name, email, role, api_key: fixedKey }) {
   if (!name || typeof name !== 'string') throw new Error('name is required');
   if (!email || typeof email !== 'string') throw new Error('email is required');
   if (role !== 'provider' && role !== 'customer') throw new Error('role must be provider or customer');
   if (store.accountsByEmail.has(email)) throw new Error('email already registered');
 
-  const api_key = generateKey(role);
+  const api_key = fixedKey || generateKey(role);
+  if (typeof api_key !== 'string' || !api_key.startsWith(role === 'provider' ? 'nkp_' : 'nck_')) {
+    throw new Error('api_key must use the correct role prefix');
+  }
+  if (store.accounts.has(api_key)) throw new Error('api_key already registered');
+
   const account = {
     account_id: makeId('acc'),
     name,

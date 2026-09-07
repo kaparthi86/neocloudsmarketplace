@@ -16,6 +16,7 @@ import { registerModel, listModels, deleteModel, chatCompletionSync, chatComplet
 import { getStats, getLeaderboard } from './stats.js';
 import { healthPayload, betaBannerText } from './health.js';
 import { submitProviderPilot, providerPilotSummary } from './provider-pilot.js';
+import { demoSeedConfig } from './seed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -325,6 +326,7 @@ export function createMarketplaceServer() {
         simulated: true,
         paymentsEnabled: false,
         canonicalDomain: process.env.CANONICAL_DOMAIN || 'neocloudsmarketplace.com',
+        ...demoSeedConfig(),
       });
     }
 

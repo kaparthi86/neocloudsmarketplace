@@ -618,3 +618,52 @@ describe('7 – Launch readiness', async () => {
     assert.equal(r.status, 400);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 8. Demo sample customer key (SEED_DEMO)
+// ---------------------------------------------------------------------------
+describe('8 – Demo sample customer key', async () => {
+  let server;
+  let DEMO_CUSTOMER_API_KEY;
+
+  before(async () => {
+    process.env.SEED_DEMO = '1';
+    const seed = await import('../src/seed.js');
+    DEMO_CUSTOMER_API_KEY = seed.DEMO_CUSTOMER_API_KEY;
+    seed.seedDemoMarketplace();
+    server = await startServer();
+  });
+  after(async () => {
+    delete process.env.SEED_DEMO;
+    await stopServer(server);
+  });
+
+  it('GET /api/config exposes the sample customer key', async () => {
+    const r = await req(server, 'GET', '/api/config');
+    assert.equal(r.status, 200);
+    assert.equal(r.body.seedDemoEnabled, true);
+    assert.equal(r.body.demoCustomerApiKey, DEMO_CUSTOMER_API_KEY);
+    assert.match(r.body.demoCustomerHint || '', /sample|reserve/i);
+  });
+
+  it('sample customer key authenticates and can reserve a seeded listing', async () => {
+    const me = await req(server, 'GET', '/v1/auth/me', undefined, DEMO_CUSTOMER_API_KEY);
+    assert.equal(me.status, 200);
+    assert.equal(me.body.role, 'customer');
+
+    const listings = await req(server, 'GET', '/v1/listings?available=true&gpu_model=H100-SXM5-80GB');
+    assert.equal(listings.status, 200);
+    assert.ok(listings.body.length >= 1);
+    const listing = listings.body.find(l => (l.min_hours || 1) <= 1) || listings.body[0];
+    const hours = Math.max(1, listing.min_hours || 1);
+
+    const r = await req(server, 'POST', '/v1/reservations', {
+      listing_id: listing.listing_id,
+      hours,
+    }, DEMO_CUSTOMER_API_KEY);
+    assert.equal(r.status, 201, `reserve failed: ${JSON.stringify(r.body)} listing=${listing.listing_id} hours=${hours}`);
+    assert.ok(r.body.reservation_id);
+    assert.equal(r.body.simulated, true);
+    assert.equal(r.body.payment_collected, false);
+  });
+});

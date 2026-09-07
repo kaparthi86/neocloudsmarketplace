@@ -160,10 +160,13 @@
       <div style="flex:1;min-width:240px">
         <h3>Get started</h3>
         <p style="color:var(--muted);font-size:.8rem;margin-bottom:10px">Browse without a key. Reserve or chat with a free API key — demo only, no card required.</p>
+        <p id="demo-key-hint" class="notice" style="display:none;margin-bottom:10px"></p>
         <div class="form-group" style="margin:0">
           <input type="text" id="api-key-input" placeholder="nck_... or nkp_..." style="width:100%;max-width:360px">
         </div>
+        <code id="demo-key-value" style="display:none;font-size:.72rem;color:var(--gold);margin-top:8px;word-break:break-all"></code>
       </div>
+      <button class="btn btn-outline btn-sm" id="use-sample-key-btn" style="display:none" onclick="useSampleCustomerKey()">Use sample key</button>
       <button class="btn btn-outline btn-sm" onclick="saveKey()">Save Key</button>
       <button class="btn btn-gold btn-sm" onclick="openRegister()">Get API Key</button>
     </div>
@@ -303,6 +306,7 @@ let workloadFilter = '';
 let priceSort = 'price_asc';
 let maxPrice = '';
 let pendingAction = null; // { type: 'reserve'|'chat', ... }
+let demoCustomerApiKey = '';
 const DEFAULT_REGISTER_NOTICE = 'Keys are free. Reservations and inference are simulated. We do not collect a payment method.';
 
 // Check ?api_key= param
@@ -430,7 +434,31 @@ async function loadSiteConfig() {
     const cfg = await fetch('/api/config').then(r => r.json());
     const banner = document.getElementById('beta-banner');
     if (cfg.betaMessage) banner.textContent = cfg.betaMessage;
+    if (cfg.demoCustomerApiKey) {
+      demoCustomerApiKey = cfg.demoCustomerApiKey;
+      const hint = document.getElementById('demo-key-hint');
+      const value = document.getElementById('demo-key-value');
+      const btn = document.getElementById('use-sample-key-btn');
+      if (hint) {
+        hint.style.display = 'block';
+        hint.textContent = cfg.demoCustomerHint || 'Sample customer key available for demo Reserve / chat.';
+      }
+      if (value) {
+        value.style.display = 'block';
+        value.textContent = demoCustomerApiKey;
+      }
+      if (btn) btn.style.display = '';
+    }
   } catch { /* ignore */ }
+}
+
+async function useSampleCustomerKey() {
+  if (!demoCustomerApiKey) {
+    toast('Sample key not available (is SEED_DEMO=1?)', true);
+    return;
+  }
+  document.getElementById('api-key-input').value = demoCustomerApiKey;
+  await saveKey();
 }
 
 function openRegister() {
