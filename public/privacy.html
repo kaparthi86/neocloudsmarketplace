@@ -4,17 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy — Neo Clouds Marketplace</title>
-<link rel="stylesheet" href="data:text/css,*{box-sizing:border-box;margin:0;padding:0}body{font-family:system-ui,sans-serif;background:#0d1117;color:#c9d1d9;line-height:1.6;padding:32px 20px;max-width:720px;margin:0 auto}h1{color:#f0b429;margin-bottom:8px}a{color:#58a6ff}p,ul{margin:12px 0}ul{padding-left:20px}">
+<link rel="stylesheet" href="/site.css">
+<style>
+  .page-wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px 24px; }
+  .page-wrap h1 { font-family: var(--display); font-weight: 400; color: var(--gold); margin-bottom: 8px; }
+  .page-wrap h2 { color: #fff; font-size: 1.05rem; margin: 22px 0 8px; }
+  .page-wrap p, .page-wrap li { margin: 10px 0; }
+  .page-wrap ul { padding-left: 20px; }
+</style>
 </head>
 <body>
+<nav class="site-nav">
+  <a class="logo" href="/">☁ Neo Clouds</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/marketplace">Marketplace</a>
+    <a href="/providers.html">Providers</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+</nav>
+<main class="page-wrap">
 <h1>Privacy Policy</h1>
-<p><strong>Neo Clouds Marketplace</strong> — <a href="https://neocloudsmarketplace.com">neocloudsmarketplace.com</a></p>
+<p><strong>Neo Clouds Marketplace</strong> — <a href="https://neocloudsmarketplace.com" style="color:var(--blue)">neocloudsmarketplace.com</a></p>
 <p>Last updated: September 2026</p>
 <p>Neo Clouds is an open GPU marketplace. This policy describes what we collect when you use the site and API.</p>
 <h2>What we collect</h2>
 <ul>
   <li><strong>Account info:</strong> name and email when you register for an API key.</li>
   <li><strong>Provider pilot waitlist:</strong> name, email, optional company, and hardware inventory you submit on the provider pilot form.</li>
+  <li><strong>Contact form:</strong> name, email, intent, and message when you write via Contact.</li>
   <li><strong>Usage data:</strong> reservations, inference calls, and token counts for demo metering. We do not process payments.</li>
   <li><strong>Technical logs:</strong> IP address, request timestamps, and errors for security and uptime.</li>
 </ul>
@@ -26,7 +45,11 @@
 <h2>Retention</h2>
 <p>API keys and usage records are kept while your account is active. You may request deletion by contacting the operator.</p>
 <h2>Contact</h2>
-<p>Questions: use the contact address listed on the main site or your deployment operator.</p>
-<p><a href="/">← Back to Neo Clouds</a></p>
+<p>Questions: <a href="mailto:hello@neocloudsmarketplace.com" style="color:var(--blue)">hello@neocloudsmarketplace.com</a> or the <a href="/contact.html" style="color:var(--blue)">Contact</a> page.</p>
+<p><a href="/" style="color:var(--blue)">← Back to Neo Clouds</a></p>
+</main>
+<footer class="site-footer">
+  <p><a href="/">Home</a><a href="/terms.html">Terms</a><a href="/contact.html">Contact</a></p>
+</footer>
 </body>
 </html>

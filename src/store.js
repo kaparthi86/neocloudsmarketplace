@@ -13,6 +13,7 @@ export const store = {
   models: new Map(),        // model_id -> model
   usageEvents: [],          // append-only
   providerPilot: [],        // provider waitlist / inventory interest (pilot)
+  contactMessages: [],      // public contact form
 };
 
 // ---------------------------------------------------------------------------

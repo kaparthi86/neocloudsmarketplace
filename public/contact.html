@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Contact Neo Clouds — providers with spare GPUs/TPUs and teams who need low-cost accelerator access.">
+<meta name="theme-color" content="#0d1117">
+<link rel="canonical" href="https://neocloudsmarketplace.com/contact.html">
+<link rel="stylesheet" href="/site.css">
+<title>Contact — Neo Clouds</title>
+<style>
+  .page-wrap { max-width: 640px; margin: 0 auto; padding: 48px 24px 24px; }
+  .page-wrap h1 {
+    font-family: var(--display);
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 400;
+    color: #fff;
+    margin-bottom: 14px;
+  }
+  .lede { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; max-width: 48ch; }
+  .contact-email {
+    display: inline-block;
+    color: var(--gold);
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 28px;
+  }
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+  }
+  .field { margin-bottom: 14px; }
+  label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: var(--font);
+  }
+  textarea { min-height: 110px; resize: vertical; }
+  .hint { color: var(--muted); font-size: 0.8rem; margin-top: 12px; line-height: 1.45; }
+  .status { margin-top: 12px; font-size: 0.88rem; }
+  .status.ok { color: var(--green); }
+  .status.err { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="honesty-banner">Early access contact — we read every note. No live jobs or payments yet.</div>
+<nav class="site-nav">
+  <a class="logo" href="/">☁ Neo Clouds</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/marketplace">Marketplace</a>
+    <a href="/providers.html">Providers</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html" class="active">Contact</a>
+  </div>
+</nav>
+
+<main class="page-wrap">
+  <h1>Contact</h1>
+  <p class="lede">Providers with spare GPUs/TPUs, or teams exploring low-cost accelerator access — say hello.</p>
+  <a class="contact-email" href="mailto:hello@neocloudsmarketplace.com">hello@neocloudsmarketplace.com</a>
+
+  <div class="form-card">
+    <form id="contact-form" onsubmit="return submitContact(event)">
+      <div class="field">
+        <label for="intent">I am…</label>
+        <select id="intent" name="intent" required>
+          <option value="provider">a provider with spare hardware</option>
+          <option value="customer">looking for compute</option>
+          <option value="other">something else</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="name">Name *</label>
+        <input id="name" name="name" required maxlength="120" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label for="email">Email *</label>
+        <input id="email" name="email" type="email" required maxlength="200" placeholder="you@company.com">
+      </div>
+      <div class="field">
+        <label for="message">Message *</label>
+        <textarea id="message" name="message" required maxlength="4000" placeholder="Tell us briefly what you have or need…"></textarea>
+      </div>
+      <button type="submit" class="btn btn-gold">Send message</button>
+      <p class="hint">We’ll follow up by email. This does not create live reservations or enable payouts.</p>
+      <p id="form-status" class="status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+
+  <div class="cta-row" style="margin-top:24px">
+    <a class="btn btn-outline" href="/providers.html">Provider pilot form</a>
+    <a class="btn btn-outline" href="/marketplace">Marketplace</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <p>Neo Clouds · Early access · Open marketplace for unused compute</p>
+  <p>
+    <a href="/">Home</a>
+    <a href="/about.html">About</a>
+    <a href="/providers.html">Providers</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+  </p>
+</footer>
+<script>
+async function submitContact(event) {
+  event.preventDefault();
+  const status = document.getElementById('form-status');
+  status.className = 'status';
+  status.textContent = 'Sending…';
+  const form = event.target;
+  const body = {
+    intent: form.intent.value,
+    name: form.name.value.trim(),
+    email: form.email.value.trim(),
+    message: form.message.value.trim(),
+  };
+  try {
+    const res = await fetch('/v1/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
+    status.className = 'status ok';
+    status.textContent = data.message + (data.contact_id ? ` Reference: ${data.contact_id}` : '');
+    form.reset();
+  } catch (e) {
+    status.className = 'status err';
+    status.textContent = e.message || 'Could not send — email hello@neocloudsmarketplace.com';
+  }
+  return false;
+}
+</script>
+</body>
+</html>

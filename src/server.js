@@ -17,6 +17,7 @@ import { getStats, getLeaderboard } from './stats.js';
 import { healthPayload, betaBannerText } from './health.js';
 import { submitProviderPilot, providerPilotSummary } from './provider-pilot.js';
 import { demoSeedConfig } from './seed.js';
+import { submitContact, contactSummary } from './contact.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -302,6 +303,19 @@ export function buildRouter() {
     } catch (e) { handleError(res, e); }
   });
 
+  router.post('/v1/contact', async (req, res) => {
+    try {
+      const body = await readBody(req);
+      created(res, submitContact(body));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.get('/v1/contact', async (req, res) => {
+    try {
+      ok(res, contactSummary());
+    } catch (e) { handleError(res, e); }
+  });
+
   return router;
 }
 
@@ -330,23 +344,35 @@ export function createMarketplaceServer() {
       });
     }
 
-    // Legal
+    // Marketing + legal pages
     if (pathname === '/privacy.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'privacy.html'), 'text/html; charset=utf-8');
     }
     if (pathname === '/terms.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'terms.html'), 'text/html; charset=utf-8');
     }
+    if (pathname === '/about.html') {
+      return serveStatic(res, join(PUBLIC_DIR, 'about.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/contact.html') {
+      return serveStatic(res, join(PUBLIC_DIR, 'contact.html'), 'text/html; charset=utf-8');
+    }
     if (pathname === '/providers.html' || pathname === '/provider-pilot.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'providers.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/site.css') {
+      return serveStatic(res, join(PUBLIC_DIR, 'site.css'), 'text/css; charset=utf-8');
     }
     if (pathname === '/manifest.webmanifest') {
       return serveStatic(res, join(PUBLIC_DIR, 'manifest.webmanifest'), 'application/manifest+json');
     }
 
-    // Static files
-    if (pathname === '/' || pathname === '/index.html') {
+    // Home + marketplace app
+    if (pathname === '/' || pathname === '/index.html' || pathname === '/home.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'index.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/marketplace' || pathname === '/marketplace.html' || pathname === '/app') {
+      return serveStatic(res, join(PUBLIC_DIR, 'marketplace.html'), 'text/html; charset=utf-8');
     }
     if (pathname.startsWith('/public/')) {
       const filePath = join(PUBLIC_DIR, pathname.slice('/public/'.length));

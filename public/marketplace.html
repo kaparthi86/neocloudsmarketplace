@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Neo Clouds marketplace — browse unused GPUs and TPUs by hardware, workload, and price. Early access demo.">
+<meta name="theme-color" content="#0d1117">
+<link rel="canonical" href="https://neocloudsmarketplace.com/marketplace">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/site.css">
+<title>Marketplace — Neo Clouds</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --gold: #f0b429;
+    --gold-dim: #b8860b;
+    --green: #3fb950;
+    --blue: #58a6ff;
+    --red: #f85149;
+    --radius: 12px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* NAV — site chrome in site.css; keep app subnav styles */
+  .app-subnav { display: flex; gap: 8px; flex-wrap: wrap; }
+  .app-subnav a { padding: 6px 14px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 0.875rem; transition: color .2s, background .2s; }
+  .app-subnav a:hover, .app-subnav a.active { color: var(--text); background: rgba(255,255,255,.06); }
+  .logo { font-size: 1.2rem; font-weight: 700; color: var(--gold); letter-spacing: -0.5px; text-decoration: none; }
+
+  /* HERO */
+  .hero { text-align: center; padding: 56px 24px 32px; }
+  .hero h1 { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; color: #fff; margin-bottom: 12px; }
+  .hero p { color: var(--muted); font-size: 1.05rem; max-width: 640px; margin: 0 auto 28px; }
+  .stats-strip { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .stat-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; font-size: 0.85rem; }
+  .stat-pill span { color: var(--gold); font-weight: 600; }
+
+  /* MAIN */
+  main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* GRID */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+  /* CARD */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: box-shadow .2s, border-color .2s; }
+  .card:hover { border-color: var(--gold-dim); box-shadow: 0 0 18px rgba(240,180,41,.12); }
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .gpu-model { font-family: 'Courier New', monospace; font-size: 0.95rem; font-weight: 600; color: #fff; }
+  .price { font-family: 'Courier New', monospace; font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+  .price-unit { font-size: 0.75rem; color: var(--muted); }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; border: 1px solid; }
+  .badge-interconnect { border-color: var(--blue); color: var(--blue); }
+  .badge-spot { border-color: var(--gold); color: var(--gold); }
+  .badge-available { border-color: var(--green); color: var(--green); }
+  .badge-unavailable { border-color: var(--red); color: var(--red); }
+  .meta { color: var(--muted); font-size: 0.8rem; margin: 4px 0; }
+  .meta strong { color: var(--text); }
+
+  /* BUTTONS */
+  .btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: opacity .2s; }
+  .btn:hover { opacity: .85; }
+  .btn-gold { background: var(--gold); color: #000; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+  .btn-filter.active, .btn-workload.active { border-color: var(--gold); color: var(--gold); background: rgba(240,180,41,.1); }
+
+  /* CATALOG CONTROLS */
+  .catalog-bar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .catalog-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .catalog-label { color: var(--muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; min-width: 72px; }
+  .catalog-row select, .catalog-row input[type="number"] {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; color: var(--text); font-size: 0.8rem;
+  }
+  .catalog-row input[type="number"] { width: 110px; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+  th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: .5px; }
+  tr:last-child td { border-bottom: none; }
+
+  /* STATS PAGE */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; }
+  .stat-card .big { font-size: 2rem; font-weight: 700; color: var(--gold); }
+  .stat-card .label { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 200; }
+  .modal-overlay.hidden { display: none; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: min(480px, 95vw); }
+  .modal h2 { margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+  .form-group input, .form-group textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 0.9rem; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+  /* CHAT */
+  .chat-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; max-height: 280px; overflow-y: auto; margin-bottom: 10px; font-size: 0.85rem; line-height: 1.5; }
+  .chat-msg { margin-bottom: 8px; }
+  .chat-msg .role { font-weight: 600; color: var(--gold); margin-right: 6px; }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input-row input { flex: 1; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; font-size: 0.875rem; z-index: 300; animation: fadeIn .3s; }
+  .toast.error { border-color: var(--red); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* KEY SETUP */
+  .key-setup { background: var(--surface); border: 1px solid var(--gold-dim); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .key-setup h3 { color: var(--gold); margin-bottom: 8px; font-size: 0.9rem; }
+
+  .honesty-banner { background: rgba(240,180,41,.12); border-bottom: 1px solid var(--gold-dim); color: var(--gold); text-align: center; padding: 10px 16px; font-size: 0.85rem; line-height: 1.45; }
+  .notice { color: var(--muted); font-size: 0.8rem; margin: 0 0 12px; line-height: 1.45; }
+
+  footer { text-align: center; padding: 32px 16px 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 40px; }
+  footer a { color: var(--blue); text-decoration: none; margin: 0 8px; }
+
+  @media (max-width: 600px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .stats-strip { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="honesty-banner" id="beta-banner">Early access: listings, reservations, and inference are simulated — not real GPU or TPU access yet. Reservations do not charge you. No payments are collected.</div>
+
+<nav class="site-nav">
+  <a class="logo" href="/">☁ Neo Clouds</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/marketplace" class="active">Marketplace</a>
+    <a href="/providers.html">Providers</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+</nav>
+<nav class="site-nav" style="position:relative;top:0;height:auto;min-height:44px;padding:8px 24px;background:var(--surface)">
+  <div class="app-subnav" id="app-subnav">
+    <a href="#listings" class="active">Listings</a>
+    <a href="#models">Models</a>
+    <a href="#providers">Leaderboard</a>
+    <a href="#stats">Stats</a>
+  </div>
+</nav>
+
+<!-- Listings page -->
+<div id="page-listings" class="page active">
+  <div class="hero">
+    <h1>GPU &amp; TPU Marketplace</h1>
+    <p>Browse listed NVIDIA GPUs and Google-style TPUs. Early access: reserve and chat are simulated until real hardware is connected. You will not be charged.</p>
+    <div class="stats-strip" id="hero-stats"></div>
+  </div>
+  <main>
+    <div class="key-setup" id="key-setup-section">
+      <div style="flex:1;min-width:240px">
+        <h3>Get started</h3>
+        <p style="color:var(--muted);font-size:.8rem;margin-bottom:10px">Browse without a key. Reserve or chat with a free API key — demo only, no card required.</p>
+        <p id="demo-key-hint" class="notice" style="display:none;margin-bottom:10px"></p>
+        <div class="form-group" style="margin:0">
+          <input type="text" id="api-key-input" placeholder="nck_... or nkp_..." style="width:100%;max-width:360px">
+        </div>
+        <code id="demo-key-value" style="display:none;font-size:.72rem;color:var(--gold);margin-top:8px;word-break:break-all"></code>
+      </div>
+      <button class="btn btn-outline btn-sm" id="use-sample-key-btn" style="display:none" onclick="useSampleCustomerKey()">Use sample key</button>
+      <button class="btn btn-outline btn-sm" onclick="saveKey()">Save Key</button>
+      <button class="btn btn-gold btn-sm" onclick="openRegister()">Get API Key</button>
+    </div>
+    <div class="catalog-bar" id="catalog-bar">
+      <div class="catalog-row">
+        <span class="catalog-label">Hardware</span>
+        <button class="btn btn-outline btn-sm btn-filter active" id="filter-all" onclick="setAccelFilter('')">All</button>
+        <button class="btn btn-outline btn-sm btn-filter" id="filter-gpu" onclick="setAccelFilter('gpu')">GPUs</button>
+        <button class="btn btn-outline btn-sm btn-filter" id="filter-tpu" onclick="setAccelFilter('tpu')">TPUs</button>
+      </div>
+      <div class="catalog-row">
+        <span class="catalog-label">Workload</span>
+        <button class="btn btn-outline btn-sm btn-workload active" data-workload="" onclick="setWorkloadFilter('')">All</button>
+        <button class="btn btn-outline btn-sm btn-workload" data-workload="training" onclick="setWorkloadFilter('training')">Training</button>
+        <button class="btn btn-outline btn-sm btn-workload" data-workload="inference" onclick="setWorkloadFilter('inference')">Inference</button>
+        <button class="btn btn-outline btn-sm btn-workload" data-workload="fine-tune" onclick="setWorkloadFilter('fine-tune')">Fine-tune</button>
+      </div>
+      <div class="catalog-row">
+        <span class="catalog-label">Price</span>
+        <select id="sort-price" onchange="setPriceSort(this.value)" aria-label="Sort by price">
+          <option value="price_asc">Lowest first</option>
+          <option value="price_desc">Highest first</option>
+          <option value="hardware">By hardware</option>
+        </select>
+        <input type="number" id="max-price" min="0" step="0.1" placeholder="Max $/hr" onchange="setMaxPrice(this.value)" onkeydown="if(event.key==='Enter')setMaxPrice(this.value)" aria-label="Maximum price per hour">
+      </div>
+    </div>
+    <div class="card-grid" id="listings-grid"></div>
+    <p id="listings-empty" style="color:var(--muted);display:none">No listings found.</p>
+  </main>
+</div>
+
+<!-- Models page -->
+<div id="page-models" class="page">
+  <main>
+    <h2 style="margin-bottom:8px">Inference Models</h2>
+    <p class="notice">Chat is a canned simulation. Token prices are listed rates only — nothing is billed.</p>
+    <div class="card-grid" id="models-grid"></div>
+    <p id="models-empty" style="color:var(--muted);display:none">No models available.</p>
+  </main>
+</div>
+
+<!-- Providers page -->
+<div id="page-providers" class="page">
+  <main>
+    <h2 style="margin-bottom:8px">Provider Leaderboard</h2>
+    <p class="notice">Demo providers and listed rates. Reservations here do not charge anyone.</p>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <table>
+        <thead><tr><th>#</th><th>Provider</th><th>Region</th><th>Reservations</th><th>Avg Price/hr</th></tr></thead>
+        <tbody id="providers-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Stats page -->
+<div id="page-stats" class="page">
+  <main>
+    <h2 style="margin-bottom:20px">Marketplace Stats</h2>
+    <div class="stats-grid" id="stats-grid"></div>
+    <h3 style="margin-bottom:12px;color:var(--muted)">GPU Model Distribution</h3>
+    <div id="gpu-chart" style="font-family:monospace;font-size:0.85rem;line-height:2;background:var(--surface);padding:16px;border-radius:var(--radius);border:1px solid var(--border)"></div>
+  </main>
+</div>
+
+<!-- Register modal -->
+<div class="modal-overlay hidden" id="register-modal">
+  <div class="modal">
+    <h2>Get a free API key</h2>
+    <p class="notice" id="register-notice">Keys are free. Reservations and inference are simulated. We do not collect a payment method.</p>
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" id="reg-name" placeholder="Your name">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="reg-email" placeholder="you@company.com">
+    </div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="reg-role" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text)">
+        <option value="customer">Customer — reserve GPUs/TPUs &amp; run inference</option>
+        <option value="provider">Provider — list GPU or TPU nodes</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('register-modal')">Cancel</button>
+      <button class="btn btn-gold" onclick="submitRegister()">Create key</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reserve modal -->
+<div class="modal-overlay hidden" id="reserve-modal">
+  <div class="modal">
+    <h2>Simulated reservation</h2>
+    <p id="reserve-info" style="color:var(--muted);font-size:.85rem;margin-bottom:10px"></p>
+    <p class="notice">This does not provision a real GPU or TPU and does not charge you. No payment method is collected.</p>
+    <div class="form-group">
+      <label>Hours (1–720)</label>
+      <input type="number" id="reserve-hours" value="1" min="1" max="720">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('reserve-modal')">Cancel</button>
+      <button class="btn btn-gold" onclick="submitReservation()">Reserve (no charge)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chat modal -->
+<div class="modal-overlay hidden" id="chat-modal">
+  <div class="modal" style="width:min(600px,95vw)">
+    <h2 id="chat-model-name" style="font-size:1rem;margin-bottom:8px"></h2>
+    <p class="notice">Simulated chat — canned replies, not billed, no real accelerator.</p>
+    <div class="chat-panel" id="chat-panel"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn btn-gold btn-sm" onclick="sendChat()">Send</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('chat-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+let API_KEY = localStorage.getItem('neo_api_key') || '';
+let currentListingId = null;
+let currentModelId = null;
+let currentModelName = null;
+let accelFilter = '';
+let workloadFilter = '';
+let priceSort = 'price_asc';
+let maxPrice = '';
+let pendingAction = null; // { type: 'reserve'|'chat', ... }
+let demoCustomerApiKey = '';
+const DEFAULT_REGISTER_NOTICE = 'Keys are free. Reservations and inference are simulated. We do not collect a payment method.';
+
+// Check ?api_key= param
+const urlParams = new URLSearchParams(location.search);
+if (urlParams.get('api_key')) {
+  API_KEY = urlParams.get('api_key');
+  localStorage.setItem('neo_api_key', API_KEY);
+}
+if (API_KEY) document.getElementById('api-key-input').value = API_KEY;
+
+loadSiteConfig();
+validateStoredKey();
+
+// ---------------------------------------------------------------------------
+// Routing
+// ---------------------------------------------------------------------------
+const pages = { listings: 'page-listings', models: 'page-models', providers: 'page-providers', stats: 'page-stats' };
+
+function navigate(hash) {
+  const page = hash.replace('#', '') || 'listings';
+  Object.entries(pages).forEach(([k, id]) => {
+    document.getElementById(id).classList.toggle('active', k === page);
+  });
+  document.querySelectorAll('#app-subnav a').forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === `#${page}`);
+  });
+  if (page === 'listings') { loadStats(); loadListings(); }
+  else if (page === 'models') loadModels();
+  else if (page === 'providers') loadProviders();
+  else if (page === 'stats') loadStatsPage();
+}
+
+window.addEventListener('hashchange', () => navigate(location.hash));
+navigate(location.hash || '#listings');
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+async function publicApi(path) {
+  const res = await fetch('/v1' + path);
+  return res.json();
+}
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (API_KEY) opts.headers['Authorization'] = `Bearer ${API_KEY}`;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/v1' + path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.message || data.error || `Request failed (${res.status})`);
+    err.status = res.status;
+    err.code = data.error;
+    err.body = data;
+    throw err;
+  }
+  return data;
+}
+
+function clearApiKey() {
+  API_KEY = '';
+  localStorage.removeItem('neo_api_key');
+  const input = document.getElementById('api-key-input');
+  if (input) input.value = '';
+}
+
+async function validateStoredKey() {
+  if (!API_KEY) return;
+  try {
+    await api('GET', '/auth/me');
+  } catch (e) {
+    if (e.status === 401) {
+      clearApiKey();
+      toast('Saved API key is no longer valid (server may have restarted). Get a new free key to reserve.', true);
+    }
+  }
+}
+
+function promptForCustomerKey(message) {
+  const notice = document.getElementById('register-notice');
+  if (notice) notice.textContent = message || DEFAULT_REGISTER_NOTICE;
+  const role = document.getElementById('reg-role');
+  if (role) role.value = 'customer';
+  openRegister();
+}
+
+async function ensureCustomerKey(action) {
+  if (!API_KEY) {
+    pendingAction = action || null;
+    promptForCustomerKey('Create a free customer API key to reserve or chat. Demo only — no charge.');
+    return false;
+  }
+  try {
+    const me = await api('GET', '/auth/me');
+    if (me.role !== 'customer') {
+      pendingAction = action || null;
+      promptForCustomerKey('Reservations need a customer key (nck_…). Register as Customer — provider keys cannot reserve.');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    if (e.status === 401) clearApiKey();
+    pendingAction = action || null;
+    promptForCustomerKey('Your API key is missing or invalid. Get a free customer key to continue (demo, no charge).');
+    return false;
+  }
+}
+
+async function resumePendingAction() {
+  const action = pendingAction;
+  pendingAction = null;
+  if (!action) return;
+  if (action.type === 'reserve') {
+    currentListingId = action.listingId;
+    document.getElementById('reserve-info').textContent = action.info || '';
+    document.getElementById('reserve-hours').value = action.hours || 1;
+    document.getElementById('reserve-modal').classList.remove('hidden');
+  } else if (action.type === 'chat') {
+    openChat(action.modelId, action.modelName);
+  }
+}
+
+async function loadSiteConfig() {
+  try {
+    const cfg = await fetch('/api/config').then(r => r.json());
+    const banner = document.getElementById('beta-banner');
+    if (cfg.betaMessage) banner.textContent = cfg.betaMessage;
+    if (cfg.demoCustomerApiKey) {
+      demoCustomerApiKey = cfg.demoCustomerApiKey;
+      const hint = document.getElementById('demo-key-hint');
+      const value = document.getElementById('demo-key-value');
+      const btn = document.getElementById('use-sample-key-btn');
+      if (hint) {
+        hint.style.display = 'block';
+        hint.textContent = cfg.demoCustomerHint || 'Sample customer key available for demo Reserve / chat.';
+      }
+      if (value) {
+        value.style.display = 'block';
+        value.textContent = demoCustomerApiKey;
+      }
+      if (btn) btn.style.display = '';
+    }
+  } catch { /* ignore */ }
+}
+
+async function useSampleCustomerKey() {
+  if (!demoCustomerApiKey) {
+    toast('Sample key not available (is SEED_DEMO=1?)', true);
+    return;
+  }
+  document.getElementById('api-key-input').value = demoCustomerApiKey;
+  await saveKey();
+}
+
+function openRegister() {
+  document.getElementById('register-modal').classList.remove('hidden');
+}
+
+async function submitRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const role = document.getElementById('reg-role').value;
+  if (!name || !email) { toast('Name and email required', true); return; }
+  try {
+    const res = await fetch('/v1/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, role }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.error);
+    API_KEY = data.api_key;
+    localStorage.setItem('neo_api_key', API_KEY);
+    document.getElementById('api-key-input').value = API_KEY;
+    const notice = document.getElementById('register-notice');
+    if (notice) notice.textContent = DEFAULT_REGISTER_NOTICE;
+    closeModal('register-modal');
+    toast(`Key saved (${role}). Keep it secret.`);
+    if (role === 'customer') await resumePendingAction();
+    else pendingAction = null;
+  } catch (e) { toast(e.message, true); }
+}
+
+async function saveKey() {
+  API_KEY = document.getElementById('api-key-input').value.trim();
+  if (!API_KEY) {
+    clearApiKey();
+    toast('API key cleared', false);
+    return;
+  }
+  localStorage.setItem('neo_api_key', API_KEY);
+  try {
+    const me = await api('GET', '/auth/me');
+    toast(`API key saved (${me.role})`, false);
+    if (me.role === 'customer') await resumePendingAction();
+  } catch (e) {
+    clearApiKey();
+    toast('Invalid API key — get a new free key (server may have restarted).', true);
+    promptForCustomerKey('Saved key was invalid. Register for a free customer key.');
+  }
+}
+
+function toast(msg, isError = false) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (isError ? ' error' : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+// ---------------------------------------------------------------------------
+// Listings
+// ---------------------------------------------------------------------------
+
+function setAccelFilter(kind) {
+  accelFilter = kind;
+  document.querySelectorAll('.btn-filter').forEach(btn => {
+    const match = (kind === '' && btn.id === 'filter-all')
+      || (kind === 'gpu' && btn.id === 'filter-gpu')
+      || (kind === 'tpu' && btn.id === 'filter-tpu');
+    btn.classList.toggle('active', match);
+  });
+  loadListings();
+}
+
+function setWorkloadFilter(kind) {
+  workloadFilter = kind;
+  document.querySelectorAll('.btn-workload').forEach(btn => {
+    btn.classList.toggle('active', (btn.dataset.workload || '') === kind);
+  });
+  loadListings();
+}
+
+function setPriceSort(value) {
+  priceSort = value || 'price_asc';
+  loadListings();
+}
+
+function setMaxPrice(value) {
+  maxPrice = value === '' || value == null ? '' : String(value);
+  loadListings();
+}
+
+function listingsQuery() {
+  const params = new URLSearchParams();
+  if (accelFilter) params.set('accelerator_type', accelFilter);
+  if (workloadFilter) params.set('workload', workloadFilter);
+  if (priceSort) params.set('sort', priceSort);
+  if (maxPrice !== '' && !Number.isNaN(Number(maxPrice))) params.set('max_price_per_hour', maxPrice);
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+async function loadListings() {
+  const grid = document.getElementById('listings-grid');
+  const empty = document.getElementById('listings-empty');
+  grid.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
+  try {
+    const data = await publicApi('/listings' + listingsQuery());
+    if (!Array.isArray(data)) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    grid.innerHTML = '';
+    empty.style.display = data.length === 0 ? 'block' : 'none';
+    data.forEach(l => grid.appendChild(listingCard(l)));
+  } catch(e) {
+    grid.innerHTML = `<p style="color:var(--red)">${e.message}</p>`;
+  }
+}
+
+function listingCard(l) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <div class="card-header">
+      <div>
+        <div class="gpu-model">${esc(l.gpu_model)}</div>
+        <div class="meta" style="margin-top:4px">${l.gpu_count}× ${(l.accelerator_type || 'gpu').toUpperCase()} · ${l.vram_gb}GB memory</div>
+      </div>
+      <div style="text-align:right">
+        <div class="price">$${esc(l.price_per_hour)}</div>
+        <div class="price-unit">listed /hr · not billed</div>
+      </div>
+    </div>
+    <div class="badges">
+      <span class="badge badge-interconnect">${esc((l.accelerator_type || 'gpu').toUpperCase())}</span>
+      ${l.interconnect !== 'none' ? `<span class="badge badge-interconnect">${esc(l.interconnect)}</span>` : ''}
+      ${l.spot ? '<span class="badge badge-spot">SPOT</span>' : ''}
+      <span class="badge badge-spot">SIMULATED</span>
+      <span class="badge ${l.available ? 'badge-available' : 'badge-unavailable'}">${l.available ? 'Available' : 'In Use'}</span>
+    </div>
+    <div class="meta">Region: <strong>${esc(l.region)}</strong></div>
+    ${l.network_bandwidth_gbps ? `<div class="meta">Network: <strong>${l.network_bandwidth_gbps} Gbps</strong></div>` : ''}
+    ${l.tags && l.tags.length ? `<div class="meta">Workload / tags: ${l.tags.map(t => `<span style="color:var(--blue)">${esc(t)}</span>`).join(', ')}</div>` : ''}
+    <div style="margin-top:14px">
+      <button class="btn btn-gold btn-sm" ${!l.available ? 'disabled style="opacity:.4"' : ''} onclick="openReserve('${l.listing_id}','${esc(l.gpu_model)}','${l.price_per_hour}')">Reserve (demo)</button>
+    </div>
+  `;
+  return div;
+}
+
+async function openReserve(listingId, gpuModel, price) {
+  const info = `${gpuModel} · $${price}/hr`;
+  const ok = await ensureCustomerKey({ type: 'reserve', listingId, info, hours: 1 });
+  if (!ok) return;
+  currentListingId = listingId;
+  document.getElementById('reserve-info').textContent = info;
+  document.getElementById('reserve-modal').classList.remove('hidden');
+}
+
+async function submitReservation() {
+  const hours = parseInt(document.getElementById('reserve-hours').value, 10);
+  const ok = await ensureCustomerKey({
+    type: 'reserve',
+    listingId: currentListingId,
+    info: document.getElementById('reserve-info').textContent,
+    hours,
+  });
+  if (!ok) {
+    closeModal('reserve-modal');
+    return;
+  }
+  try {
+    const r = await api('POST', '/reservations', { listing_id: currentListingId, hours });
+    closeModal('reserve-modal');
+    toast(`Simulated reservation saved (${r.reservation_id}). You were not charged.`);
+    loadListings();
+  } catch (e) {
+    if (e.status === 401) {
+      clearApiKey();
+      closeModal('reserve-modal');
+      pendingAction = {
+        type: 'reserve',
+        listingId: currentListingId,
+        info: document.getElementById('reserve-info').textContent,
+        hours,
+      };
+      promptForCustomerKey('API key missing or invalid. Get a free customer key to reserve (demo, no charge).');
+      return;
+    }
+    toast(e.message, true);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+async function loadModels() {
+  const grid = document.getElementById('models-grid');
+  const empty = document.getElementById('models-empty');
+  grid.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
+  try {
+    const data = await publicApi('/models');
+    if (!Array.isArray(data)) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    grid.innerHTML = '';
+    empty.style.display = data.length === 0 ? 'block' : 'none';
+    data.forEach(m => grid.appendChild(modelCard(m)));
+  } catch(e) {
+    grid.innerHTML = `<p style="color:var(--red)">${e.message}</p>`;
+  }
+}
+
+function modelCard(m) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <div style="margin-bottom:10px">
+      <div class="gpu-model" style="font-size:1rem">${esc(m.model_name)}</div>
+      <div class="meta">${esc(m.model_family)} · ${(m.context_length||4096).toLocaleString()} tokens ctx</div>
+    </div>
+    <div class="meta">Input (listed): <strong style="color:var(--gold)">$${esc(m.input_price_per_1k_tokens)}/1K</strong></div>
+    <div class="meta">Output (listed): <strong style="color:var(--gold)">$${esc(m.output_price_per_1k_tokens)}/1K</strong></div>
+    <div class="meta">Not billed</div>
+    <div style="margin-top:14px">
+      <button class="btn btn-gold btn-sm" onclick="openChat('${m.model_id}','${esc(m.model_name)}')">Try (simulated)</button>
+    </div>
+  `;
+  return div;
+}
+
+async function openChat(modelId, modelName) {
+  const ok = await ensureCustomerKey({ type: 'chat', modelId, modelName });
+  if (!ok) return;
+  currentModelId = modelId;
+  currentModelName = modelName;
+  document.getElementById('chat-model-name').textContent = modelName;
+  document.getElementById('chat-panel').innerHTML = '';
+  document.getElementById('chat-modal').classList.remove('hidden');
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const panel = document.getElementById('chat-panel');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const ok = await ensureCustomerKey({ type: 'chat', modelId: currentModelId, modelName: currentModelName });
+  if (!ok) {
+    closeModal('chat-modal');
+    return;
+  }
+
+  input.value = '';
+
+  appendChat(panel, 'user', msg);
+  const assistantEl = appendChat(panel, 'assistant', '');
+
+  try {
+    const res = await fetch('/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
+      body: JSON.stringify({ model: currentModelName, messages: [{ role: 'user', content: msg }], stream: true }),
+    });
+
+    if (res.status === 401) {
+      clearApiKey();
+      closeModal('chat-modal');
+      pendingAction = { type: 'chat', modelId: currentModelId, modelName: currentModelName };
+      promptForCustomerKey('API key missing or invalid. Get a free customer key to chat (demo, no charge).');
+      return;
+    }
+
+    if (!res.ok) { assistantEl.querySelector('.content').textContent = 'Error'; return; }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = line.slice(6);
+        if (d === '[DONE]') break;
+        try {
+          const chunk = JSON.parse(d);
+          const content = chunk.choices?.[0]?.delta?.content || '';
+          assistantEl.querySelector('.content').textContent += content;
+          panel.scrollTop = panel.scrollHeight;
+        } catch {}
+      }
+    }
+  } catch(e) { assistantEl.querySelector('.content').textContent = e.message; }
+}
+
+function appendChat(panel, role, content) {
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.innerHTML = `<span class="role">${role}:</span><span class="content">${esc(content)}</span>`;
+  panel.appendChild(div);
+  panel.scrollTop = panel.scrollHeight;
+  return div;
+}
+
+// ---------------------------------------------------------------------------
+// Providers
+// ---------------------------------------------------------------------------
+async function loadProviders() {
+  const tbody = document.getElementById('providers-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>';
+  try {
+    const data = await publicApi('/leaderboard');
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No providers yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map((p, i) => `
+      <tr>
+        <td style="color:var(--muted)">${i + 1}</td>
+        <td><strong>${esc(p.name)}</strong><br><small style="color:var(--muted)">${p.provider_id}</small></td>
+        <td>${esc(p.region || '—')}</td>
+        <td>${p.reservation_count}</td>
+        <td style="font-family:monospace;color:var(--gold)">$${esc(p.avg_price_per_hour)}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red)">${e.message}</td></tr>`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stats
+// ---------------------------------------------------------------------------
+async function loadStats() {
+  try {
+    const s = await fetch('/v1/stats').then(r => r.json());
+    const strip = document.getElementById('hero-stats');
+    strip.innerHTML = `
+      <div class="stat-pill"><span>${s.providers}</span> Providers</div>
+      <div class="stat-pill"><span>${s.nodes.attested}</span> Attested Nodes</div>
+      <div class="stat-pill"><span>${s.listings.available}</span> Available Listings</div>
+      <div class="stat-pill"><span>${s.models.available}</span> Models</div>
+      ${s.cheapest_per_hour ? `<div class="stat-pill">From <span>$${s.cheapest_per_hour}/hr</span> listed</div>` : ''}
+    `;
+  } catch {}
+}
+
+async function loadStatsPage() {
+  try {
+    const s = await fetch('/v1/stats').then(r => r.json());
+    const grid = document.getElementById('stats-grid');
+    grid.innerHTML = `
+      <div class="stat-card"><div class="big">${s.providers}</div><div class="label">Providers</div></div>
+      <div class="stat-card"><div class="big">${s.nodes.total}</div><div class="label">Total Nodes</div></div>
+      <div class="stat-card"><div class="big">${s.nodes.attested}</div><div class="label">Attested Nodes</div></div>
+      <div class="stat-card"><div class="big">${s.listings.available}</div><div class="label">Available Listings</div></div>
+      <div class="stat-card"><div class="big">${s.models.available}</div><div class="label">Active Models</div></div>
+      <div class="stat-card"><div class="big">${s.reservations.active}</div><div class="label">Active Reservations</div></div>
+      ${s.cheapest_per_hour ? `<div class="stat-card"><div class="big" style="font-size:1.4rem">$${s.cheapest_per_hour}</div><div class="label">Cheapest/hr</div></div>` : ''}
+    `;
+
+    // Simple bar chart for GPU models
+    const chart = document.getElementById('gpu-chart');
+    if (!s.gpu_models || s.gpu_models.length === 0) {
+      chart.textContent = 'No GPU data yet.';
+      return;
+    }
+    const maxLen = 40;
+    chart.innerHTML = s.gpu_models.map(g => {
+      const bar = '█'.repeat(Math.max(3, Math.floor(Math.random() * maxLen)));
+      return `<div><span style="color:var(--muted);display:inline-block;width:220px">${esc(g)}</span> <span style="color:var(--gold)">${bar}</span></div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('stats-grid').innerHTML = `<p style="color:var(--red)">${e.message}</p>`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+</script>
+<footer class="site-footer">
+  <p>Neo Clouds Marketplace · Early access · Simulated compute · No payments collected</p>
+  <p>
+    <a href="/">Home</a>
+    <a href="/providers.html">Providers</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html">Contact</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+  </p>
+</footer>
+</body>
+</html>
