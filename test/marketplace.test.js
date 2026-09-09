@@ -467,11 +467,43 @@ describe('7 – HTTP integration', async () => {
   before(async () => { server = await startServer(); });
   after(async () => { await stopServer(server); });
 
-  it('GET / serves HTML', async () => {
+  it('GET / serves marketing home HTML', async () => {
     const res = await fetch(`${base(server)}/`);
     assert.equal(res.status, 200);
     const text = await res.text();
     assert.ok(text.includes('Neo Clouds'));
+    assert.match(text, /unused compute/i);
+  });
+
+  it('GET /marketplace serves the app HTML', async () => {
+    const res = await fetch(`${base(server)}/marketplace`);
+    assert.equal(res.status, 200);
+    const text = await res.text();
+    assert.match(text, /Marketplace/i);
+    assert.match(text, /listings/i);
+  });
+
+  it('GET /about.html and /contact.html are served', async () => {
+    const about = await fetch(`${base(server)}/about.html`);
+    assert.equal(about.status, 200);
+    assert.match(await about.text(), /About Neo Clouds/i);
+    const contact = await fetch(`${base(server)}/contact.html`);
+    assert.equal(contact.status, 200);
+    assert.match(await contact.text(), /Contact/i);
+  });
+
+  it('POST /v1/contact accepts inbound messages', async () => {
+    const before = await req(server, 'GET', '/v1/contact');
+    const r = await req(server, 'POST', '/v1/contact', {
+      intent: 'provider',
+      name: 'Pat',
+      email: `pat-${Date.now()}@example.com`,
+      message: 'I have spare H100s for the pilot.',
+    });
+    assert.equal(r.status, 201);
+    assert.ok(r.body.contact_id);
+    const after = await req(server, 'GET', '/v1/contact');
+    assert.equal(after.body.count, before.body.count + 1);
   });
 
   it('unknown route returns 404 JSON', async () => {

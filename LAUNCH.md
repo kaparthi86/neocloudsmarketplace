@@ -112,8 +112,10 @@ Expect:
 
 Browser:
 
-- `/` — GPU marketplace
-- `/privacy.html`, `/terms.html`
+- `/` — marketing home  
+- `/marketplace` — GPU marketplace app  
+- `/about.html`, `/contact.html`, `/providers.html`  
+- `/privacy.html`, `/terms.html`  
 - **Get API Key** → reserve → inference **Try**
 
 ---

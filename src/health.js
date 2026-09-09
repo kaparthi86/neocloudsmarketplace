@@ -10,6 +10,7 @@ import { store } from './store.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
 const indexHtmlPath = join(PUBLIC_DIR, 'index.html');
+const marketplaceHtmlPath = join(PUBLIC_DIR, 'marketplace.html');
 
 export const DEFAULT_HONESTY_BANNER =
   'Early access: listings, reservations, and inference are simulated — not real GPU or TPU access yet. Reservations do not charge you. No payments are collected.';
@@ -25,7 +26,7 @@ export function betaBannerText() {
 
 export function healthPayload() {
   const prod = process.env.NODE_ENV === 'production';
-  const indexHtmlDeployed = existsSync(indexHtmlPath);
+  const indexHtmlDeployed = existsSync(indexHtmlPath) && existsSync(marketplaceHtmlPath);
   const base = {
     ok: true,
     service: 'neo-clouds-marketplace',
