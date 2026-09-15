@@ -1,5 +1,6 @@
 /**
  * In-process store — shared across all modules via module singleton.
+ * Optionally backed by SQLite via db.schedulePersist().
  */
 
 export const store = {
@@ -14,6 +15,7 @@ export const store = {
   usageEvents: [],          // append-only
   providerPilot: [],        // provider waitlist / inventory interest (pilot)
   contactMessages: [],      // public contact form
+  attestChallenges: new Map(), // challenge_id -> challenge
 };
 
 // ---------------------------------------------------------------------------
@@ -25,6 +27,9 @@ export function makeId(prefix) {
   const s = (++seq).toString(36);
   return `${prefix}_${ts}_${s}`;
 }
+
+export function getSeq() { return seq; }
+export function setSeq(n) { seq = Number(n) || 0; }
 
 // ---------------------------------------------------------------------------
 // Money arithmetic — BigInt scaled to 1_000_000

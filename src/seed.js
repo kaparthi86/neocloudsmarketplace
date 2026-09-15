@@ -45,6 +45,7 @@ export function seedDemoMarketplace() {
     vram_gb_per_gpu: 80,
     interconnect: 'NVLink',
     region: 'us-east-1',
+    live: false,
   });
   attestNode(providerA.account_id, nodeA.node_id);
 
@@ -55,6 +56,7 @@ export function seedDemoMarketplace() {
     vram_gb_per_gpu: 80,
     interconnect: 'InfiniBand',
     region: 'eu-central-1',
+    live: false,
   });
   attestNode(providerA.account_id, nodeB.node_id);
 
@@ -65,6 +67,7 @@ export function seedDemoMarketplace() {
     vram_gb_per_gpu: 48,
     interconnect: 'PCIe',
     region: 'ap-south-1',
+    live: false,
   });
   attestNode(providerB.account_id, nodeC.node_id);
 
@@ -102,6 +105,7 @@ export function seedDemoMarketplace() {
     vram_gb_per_gpu: 16,
     interconnect: 'ICI',
     region: 'us-central1',
+    live: false,
   });
   attestNode(providerC.account_id, nodeTpu.node_id);
   createListing(providerC.account_id, {

@@ -2,6 +2,7 @@
  * Neo Clouds GPU Marketplace — production entry point
  */
 
+import { initPersistence, closePersistence, persistNow } from './db.js';
 import { createMarketplaceServer } from './server.js';
 import { seedDemoMarketplace } from './seed.js';
 
@@ -18,7 +19,9 @@ process.on('unhandledRejection', (err) => {
 });
 
 try {
+  const dbInfo = initPersistence();
   const seedInfo = seedDemoMarketplace();
+  if (seedInfo) persistNow();
   const server = createMarketplaceServer();
   server.on('error', (err) => {
     console.error('FATAL server listen error:', err);
@@ -28,14 +31,23 @@ try {
     const domain = process.env.CANONICAL_DOMAIN || 'neocloudsmarketplace.com';
     console.log(`Neo Clouds Marketplace listening on http://${HOST}:${PORT}`);
     console.log(`Canonical domain: https://${domain}`);
+    console.log(`Persistence: ${dbInfo.path}`);
     if (seedInfo) {
       console.log('SEED_DEMO=1 — demo listings and models loaded.');
       if (seedInfo.demoCustomerApiKey) {
         console.log(`Sample customer API key: ${seedInfo.demoCustomerApiKey}`);
       }
     }
-    console.log('Honesty: reservations and inference are simulated; payments are disabled.');
+    console.log('Live hardware: neo-agent heartbeat + challenge attest + provision ack enabled.');
+    console.log('Payments remain disabled.');
   });
+
+  const shutdown = () => {
+    try { closePersistence(); } catch { /* ignore */ }
+    server.close(() => process.exit(0));
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 } catch (err) {
   console.error('FATAL startup:', err);
   process.exit(1);

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Neo Clouds provider console — register live nodes, attest with neo-agent, list hardware.">
+<meta name="theme-color" content="#0d1117">
+<link rel="stylesheet" href="/site.css">
+<title>Provider console — Neo Clouds</title>
+<style>
+  .wrap { max-width: 880px; margin: 0 auto; padding: 36px 24px 48px; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.4rem); color: #fff; margin-bottom: 8px; }
+  .lede { color: var(--muted); margin-bottom: 22px; max-width: 60ch; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+  .panel h2 { font-size: 1rem; color: var(--gold); margin-bottom: 12px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+  input, select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; color: var(--text); font-size: 0.9rem; font-family: var(--font);
+  }
+  .field { margin-bottom: 10px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  pre {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; font-size: 0.75rem; overflow-x: auto; color: var(--text); margin-top: 10px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; }
+  .ok { color: var(--green); }
+  .warn { color: var(--gold); }
+  .err { color: var(--red); }
+  .status { margin-top: 10px; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="honesty-banner">Provider console for live nodes. Use neo-agent on the host for heartbeat, attest, and provision. Payments still disabled.</div>
+<nav class="site-nav">
+  <a class="logo" href="/">☁ Neo Clouds</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/marketplace">Marketplace</a>
+    <a href="/providers.html">Providers</a>
+    <a href="/console.html" class="active">Console</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+</nav>
+
+<main class="wrap">
+  <h1>Provider console</h1>
+  <p class="lede">Onboard real hardware: save your provider key, register a <strong>live</strong> node, run <code>neo-agent</code>, then list it for customers.</p>
+
+  <div class="panel">
+    <h2>1. Provider API key</h2>
+    <div class="field">
+      <label for="api-key">nkp_… key</label>
+      <input id="api-key" placeholder="nkp_..." autocomplete="off">
+    </div>
+    <div class="row">
+      <button class="btn btn-outline" type="button" onclick="saveKey()">Save key</button>
+      <button class="btn btn-gold" type="button" onclick="openRegister()">Get provider key</button>
+      <button class="btn btn-outline" type="button" onclick="refreshNodes()">Refresh nodes</button>
+    </div>
+    <p id="key-status" class="status"></p>
+  </div>
+
+  <div class="panel">
+    <h2>2. Register live node</h2>
+    <div class="grid-2">
+      <div class="field"><label>Hostname</label><input id="hostname" placeholder="gpu-1.example.com"></div>
+      <div class="field"><label>Region</label><input id="region" placeholder="us-east-1"></div>
+      <div class="field"><label>Model</label><input id="model" placeholder="H100-SXM5-80GB"></div>
+      <div class="field"><label>Count</label><input id="count" type="number" min="1" value="1"></div>
+      <div class="field"><label>Memory GB / chip</label><input id="memory" type="number" min="1" value="80"></div>
+      <div class="field">
+        <label>Interconnect</label>
+        <select id="interconnect">
+          <option>NVLink</option><option>InfiniBand</option><option>PCIe</option><option>ICI</option><option>Ethernet</option><option>none</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <select id="accel-type"><option value="gpu">GPU</option><option value="tpu">TPU</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-gold" type="button" onclick="registerLiveNode()">Register live node</button>
+    </div>
+    <p id="node-status" class="status"></p>
+  </div>
+
+  <div class="panel">
+    <h2>3. Your nodes</h2>
+    <div id="nodes-table"><p class="status">Save a provider key to load nodes.</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>4. Run neo-agent on the host</h2>
+    <pre id="agent-cmd">NEO_API_BASE=https://neocloudsmarketplace.com \
+NEO_API_KEY=nkp_... \
+NEO_NODE_ID=node_... \
+node scripts/neo-agent.mjs</pre>
+    <p class="status">Agent heartbeats, completes challenge attest, and acks customer reservations with SSH connection info.</p>
+  </div>
+
+  <div class="panel">
+    <h2>5. Create listing</h2>
+    <div class="grid-2">
+      <div class="field"><label>Node ID</label><input id="list-node" placeholder="node_..."></div>
+      <div class="field"><label>Price / hr</label><input id="list-price" placeholder="2.85" value="2.85"></div>
+      <div class="field"><label>Workload tags (comma)</label><input id="list-tags" placeholder="training,inference"></div>
+    </div>
+    <div class="row">
+      <button class="btn btn-gold" type="button" onclick="createListing()">Publish listing</button>
+    </div>
+    <p id="list-status" class="status"></p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <p>Neo Clouds · Provider console · Payments disabled</p>
+  <p><a href="/HARDWARE.md">Hardware guide</a><a href="/providers.html">Pilot waitlist</a><a href="/marketplace">Marketplace</a></p>
+</footer>
+
+<script>
+let API_KEY = localStorage.getItem('neo_provider_key') || '';
+if (API_KEY) document.getElementById('api-key').value = API_KEY;
+
+function saveKey() {
+  API_KEY = document.getElementById('api-key').value.trim();
+  localStorage.setItem('neo_provider_key', API_KEY);
+  document.getElementById('key-status').textContent = API_KEY ? 'Provider key saved locally.' : 'Key cleared.';
+  refreshNodes();
+}
+
+async function openRegister() {
+  const name = prompt('Provider name');
+  const email = prompt('Provider email');
+  if (!name || !email) return;
+  const res = await fetch('/v1/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, role: 'provider' }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.message || data.error); return; }
+  document.getElementById('api-key').value = data.api_key;
+  saveKey();
+  alert('Provider key created. Keep it secret.');
+}
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${API_KEY}` } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/v1' + path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
+  return data;
+}
+
+async function registerLiveNode() {
+  try {
+    const body = {
+      hostname: document.getElementById('hostname').value.trim(),
+      region: document.getElementById('region').value.trim(),
+      accelerator_type: document.getElementById('accel-type').value,
+      accelerator_model: document.getElementById('model').value.trim(),
+      accelerator_count: Number(document.getElementById('count').value),
+      memory_gb_per_chip: Number(document.getElementById('memory').value),
+      interconnect: document.getElementById('interconnect').value,
+      live: true,
+    };
+    const node = await api('POST', '/nodes', body);
+    document.getElementById('node-status').innerHTML = `<span class="ok">Registered ${node.node_id}</span> — run neo-agent next.`;
+    document.getElementById('list-node').value = node.node_id;
+    document.getElementById('agent-cmd').textContent =
+`NEO_API_BASE=${location.origin} \\
+NEO_API_KEY=${API_KEY} \\
+NEO_NODE_ID=${node.node_id} \\
+node scripts/neo-agent.mjs`;
+    refreshNodes();
+  } catch (e) {
+    document.getElementById('node-status').innerHTML = `<span class="err">${e.message}</span>`;
+  }
+}
+
+async function refreshNodes() {
+  const el = document.getElementById('nodes-table');
+  if (!API_KEY) { el.innerHTML = '<p class="status">Save a provider key to load nodes.</p>'; return; }
+  try {
+    const nodes = await api('GET', '/nodes');
+    if (!nodes.length) { el.innerHTML = '<p class="status">No nodes yet.</p>'; return; }
+    el.innerHTML = `<table><thead><tr><th>Node</th><th>Model</th><th>Live</th><th>Attest</th><th>Online</th></tr></thead><tbody>${
+      nodes.map(n => {
+        const online = n.last_heartbeat_at && (Date.now() - new Date(n.last_heartbeat_at).getTime() < 90000);
+        return `<tr>
+          <td><code>${n.node_id}</code><br><small>${n.hostname} · ${n.region}</small></td>
+          <td>${n.gpu_model} × ${n.gpu_count}</td>
+          <td>${n.live ? 'yes' : 'demo'}</td>
+          <td class="${n.attestation_status==='attested'?'ok':'warn'}">${n.attestation_status}</td>
+          <td class="${online?'ok':'warn'}">${online?'online':'offline'}</td>
+        </tr>`;
+      }).join('')
+    }</tbody></table>`;
+  } catch (e) {
+    el.innerHTML = `<p class="err">${e.message}</p>`;
+  }
+}
+
+async function createListing() {
+  try {
+    const tags = document.getElementById('list-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+    const listing = await api('POST', '/listings', {
+      node_id: document.getElementById('list-node').value.trim(),
+      price_per_hour: document.getElementById('list-price').value.trim(),
+      tags,
+    });
+    document.getElementById('list-status').innerHTML =
+      `<span class="ok">Listed ${listing.listing_id}</span> · available=${listing.available} · live=${listing.live}`;
+  } catch (e) {
+    document.getElementById('list-status').innerHTML = `<span class="err">${e.message}</span>`;
+  }
+}
+
+if (API_KEY) refreshNodes();
+</script>
+</body>
+</html>

@@ -13,7 +13,7 @@ const indexHtmlPath = join(PUBLIC_DIR, 'index.html');
 const marketplaceHtmlPath = join(PUBLIC_DIR, 'marketplace.html');
 
 export const DEFAULT_HONESTY_BANNER =
-  'Early access: listings, reservations, and inference are simulated — not real GPU or TPU access yet. Reservations do not charge you. No payments are collected.';
+  'Early access: demo listings are simulated. Live provider nodes use neo-agent connect. Reservations do not charge you — no payments collected.';
 
 /** Always shown. BETA_MESSAGE overrides the wording; BETA_TESTING no longer hides it. */
 export function honestyBannerText() {
@@ -27,12 +27,18 @@ export function betaBannerText() {
 export function healthPayload() {
   const prod = process.env.NODE_ENV === 'production';
   const indexHtmlDeployed = existsSync(indexHtmlPath) && existsSync(marketplaceHtmlPath);
+  const liveNodes = [...store.nodes.values()].filter(n => n.live === true);
+  const onlineLive = liveNodes.filter(n => n.last_heartbeat_at
+    && (Date.now() - new Date(n.last_heartbeat_at).getTime()) <= Number(process.env.AGENT_HEARTBEAT_TTL_MS || 90_000));
   const base = {
     ok: true,
     service: 'neo-clouds-marketplace',
     betaMessage: betaBannerText(),
     simulated: true,
     paymentsEnabled: false,
+    liveHardwareConnect: true,
+    liveNodes: liveNodes.length,
+    onlineLiveNodes: onlineLive.length,
     indexHtmlDeployed,
     seedDemoEnabled: process.env.SEED_DEMO === '1',
     accounts: store.accounts.size,

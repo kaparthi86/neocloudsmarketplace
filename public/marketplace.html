@@ -61,6 +61,8 @@
   .badge-spot { border-color: var(--gold); color: var(--gold); }
   .badge-available { border-color: var(--green); color: var(--green); }
   .badge-unavailable { border-color: var(--red); color: var(--red); }
+  .badge-live { border-color: var(--green); color: var(--green); }
+  .badge-sim { border-color: var(--muted); color: var(--muted); }
   .meta { color: var(--muted); font-size: 0.8rem; margin: 4px 0; }
   .meta strong { color: var(--text); }
 
@@ -134,7 +136,7 @@
 </head>
 <body>
 
-<div class="honesty-banner" id="beta-banner">Early access: listings, reservations, and inference are simulated — not real GPU or TPU access yet. Reservations do not charge you. No payments are collected.</div>
+<div class="honesty-banner" id="beta-banner">Early access: demo listings are simulated. Live provider nodes use neo-agent connect. Reservations do not charge you — no payments collected.</div>
 
 <nav class="site-nav">
   <a class="logo" href="/">☁ Neo Clouds</a>
@@ -142,6 +144,7 @@
     <a href="/">Home</a>
     <a href="/marketplace" class="active">Marketplace</a>
     <a href="/providers.html">Providers</a>
+    <a href="/console.html">Console</a>
     <a href="/about.html">About</a>
     <a href="/contact.html">Contact</a>
   </div>
@@ -159,7 +162,7 @@
 <div id="page-listings" class="page active">
   <div class="hero">
     <h1>GPU &amp; TPU Marketplace</h1>
-    <p>Browse listed NVIDIA GPUs and Google-style TPUs. Early access: reserve and chat are simulated until real hardware is connected. You will not be charged.</p>
+    <p>Browse listed NVIDIA GPUs and Google-style TPUs. Live nodes show when a provider agent is online; demo rows stay simulated. You will not be charged.</p>
     <div class="stats-strip" id="hero-stats"></div>
   </div>
   <main>
@@ -270,9 +273,9 @@
 <!-- Reserve modal -->
 <div class="modal-overlay hidden" id="reserve-modal">
   <div class="modal">
-    <h2>Simulated reservation</h2>
+    <h2 id="reserve-modal-title">Reservation</h2>
     <p id="reserve-info" style="color:var(--muted);font-size:.85rem;margin-bottom:10px"></p>
-    <p class="notice">This does not provision a real GPU or TPU and does not charge you. No payment method is collected.</p>
+    <p class="notice" id="reserve-notice">No payment method is collected. You will not be charged.</p>
     <div class="form-group">
       <label>Hours (1–720)</label>
       <input type="number" id="reserve-hours" value="1" min="1" max="720">
@@ -585,6 +588,12 @@ async function loadListings() {
 function listingCard(l) {
   const div = document.createElement('div');
   div.className = 'card';
+  const isLive = l.live === true;
+  const modeBadge = isLive
+    ? '<span class="badge badge-live">LIVE</span>'
+    : '<span class="badge badge-sim">SIMULATED</span>';
+  const availLabel = l.available ? 'Available' : (isLive && l.node_online === false ? 'Agent offline' : 'In Use');
+  const reserveLabel = isLive ? 'Reserve' : 'Reserve (demo)';
   div.innerHTML = `
     <div class="card-header">
       <div>
@@ -600,25 +609,29 @@ function listingCard(l) {
       <span class="badge badge-interconnect">${esc((l.accelerator_type || 'gpu').toUpperCase())}</span>
       ${l.interconnect !== 'none' ? `<span class="badge badge-interconnect">${esc(l.interconnect)}</span>` : ''}
       ${l.spot ? '<span class="badge badge-spot">SPOT</span>' : ''}
-      <span class="badge badge-spot">SIMULATED</span>
-      <span class="badge ${l.available ? 'badge-available' : 'badge-unavailable'}">${l.available ? 'Available' : 'In Use'}</span>
+      ${modeBadge}
+      <span class="badge ${l.available ? 'badge-available' : 'badge-unavailable'}">${availLabel}</span>
     </div>
     <div class="meta">Region: <strong>${esc(l.region)}</strong></div>
     ${l.network_bandwidth_gbps ? `<div class="meta">Network: <strong>${l.network_bandwidth_gbps} Gbps</strong></div>` : ''}
     ${l.tags && l.tags.length ? `<div class="meta">Workload / tags: ${l.tags.map(t => `<span style="color:var(--blue)">${esc(t)}</span>`).join(', ')}</div>` : ''}
     <div style="margin-top:14px">
-      <button class="btn btn-gold btn-sm" ${!l.available ? 'disabled style="opacity:.4"' : ''} onclick="openReserve('${l.listing_id}','${esc(l.gpu_model)}','${l.price_per_hour}')">Reserve (demo)</button>
+      <button class="btn btn-gold btn-sm" ${!l.available ? 'disabled style="opacity:.4"' : ''} onclick="openReserve('${l.listing_id}','${esc(l.gpu_model)}','${l.price_per_hour}',${isLive})">${reserveLabel}</button>
     </div>
   `;
   return div;
 }
 
-async function openReserve(listingId, gpuModel, price) {
-  const info = `${gpuModel} · $${price}/hr`;
-  const ok = await ensureCustomerKey({ type: 'reserve', listingId, info, hours: 1 });
+async function openReserve(listingId, gpuModel, price, isLive) {
+  const info = `${gpuModel} · $${price}/hr${isLive ? ' · live node' : ' · simulated'}`;
+  const ok = await ensureCustomerKey({ type: 'reserve', listingId, info, hours: 1, isLive: !!isLive });
   if (!ok) return;
   currentListingId = listingId;
   document.getElementById('reserve-info').textContent = info;
+  document.getElementById('reserve-modal-title').textContent = isLive ? 'Live reservation' : 'Simulated reservation';
+  document.getElementById('reserve-notice').textContent = isLive
+    ? 'Live reserve waits for the provider neo-agent to ack access. No payment method is collected.'
+    : 'This does not provision a real GPU or TPU and does not charge you. No payment method is collected.';
   document.getElementById('reserve-modal').classList.remove('hidden');
 }
 
@@ -637,7 +650,14 @@ async function submitReservation() {
   try {
     const r = await api('POST', '/reservations', { listing_id: currentListingId, hours });
     closeModal('reserve-modal');
-    toast(`Simulated reservation saved (${r.reservation_id}). You were not charged.`);
+    if (r.status === 'pending_provision') {
+      toast(`Live reserve queued (${r.reservation_id}). Waiting for provider agent to provision access. No charge.`);
+    } else if (r.simulated === false && r.status === 'active') {
+      const host = r.connection_info?.ssh_host || 'host';
+      toast(`Live reservation active (${r.reservation_id}) → ${host}. No charge.`);
+    } else {
+      toast(`Simulated reservation saved (${r.reservation_id}). You were not charged.`);
+    }
     loadListings();
   } catch (e) {
     if (e.status === 401) {
@@ -859,6 +879,7 @@ function closeModal(id) {
   <p>
     <a href="/">Home</a>
     <a href="/providers.html">Providers</a>
+    <a href="/console.html">Console</a>
     <a href="/about.html">About</a>
     <a href="/contact.html">Contact</a>
     <a href="/privacy.html">Privacy</a>

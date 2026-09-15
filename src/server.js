@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { Router } from './router.js';
 import { authenticate, requireAuth, requireRole, registerAccount } from './auth.js';
-import { registerNode, listNodes, attestNode, deregisterNode } from './providers.js';
+import { registerNode, listNodes, attestNode, deregisterNode, beginAttest } from './providers.js';
 import { createListing, listListings, getListing, updateListing, deleteListing } from './listings.js';
 import { createReservation, listReservations, getReservation, cancelReservation, completeReservation } from './reservations.js';
 import { registerModel, listModels, deleteModel, chatCompletionSync, chatCompletionStream, queryUsage, usageSummary } from './inference.js';
@@ -18,6 +18,14 @@ import { healthPayload, betaBannerText } from './health.js';
 import { submitProviderPilot, providerPilotSummary } from './provider-pilot.js';
 import { demoSeedConfig } from './seed.js';
 import { submitContact, contactSummary } from './contact.js';
+import {
+  agentHeartbeat,
+  verifyAttestChallenge,
+  listPendingProvisions,
+  ackProvision,
+  HEARTBEAT_TTL_MS,
+} from './agent.js';
+import { isPersistenceEnabled } from './db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -117,6 +125,14 @@ export function buildRouter() {
       const account = authenticate(req);
       requireRole(account, 'provider');
       ok(res, attestNode(account.account_id, req.params.node_id));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.post('/v1/nodes/:node_id/attest/challenge', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireRole(account, 'provider');
+      created(res, beginAttest(account.account_id, req.params.node_id));
     } catch (e) { handleError(res, e); }
   });
 
@@ -316,6 +332,42 @@ export function buildRouter() {
     } catch (e) { handleError(res, e); }
   });
 
+  // Provider neo-agent protocol (live hardware)
+  router.post('/v1/agent/heartbeat', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireRole(account, 'provider');
+      const body = await readBody(req);
+      ok(res, agentHeartbeat(account.account_id, body));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.post('/v1/agent/attest/verify', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireRole(account, 'provider');
+      const body = await readBody(req);
+      ok(res, verifyAttestChallenge(account.account_id, body));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.get('/v1/agent/nodes/:node_id/pending', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireRole(account, 'provider');
+      ok(res, listPendingProvisions(account.account_id, req.params.node_id));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.post('/v1/agent/reservations/:reservation_id/ack', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireRole(account, 'provider');
+      const body = await readBody(req);
+      ok(res, ackProvision(account.account_id, req.params.reservation_id, body));
+    } catch (e) { handleError(res, e); }
+  });
+
   return router;
 }
 
@@ -340,6 +392,9 @@ export function createMarketplaceServer() {
         simulated: true,
         paymentsEnabled: false,
         canonicalDomain: process.env.CANONICAL_DOMAIN || 'neocloudsmarketplace.com',
+        persistenceEnabled: isPersistenceEnabled(),
+        agentHeartbeatTtlMs: HEARTBEAT_TTL_MS,
+        liveHardwareConnect: true,
         ...demoSeedConfig(),
       });
     }
@@ -356,6 +411,12 @@ export function createMarketplaceServer() {
     }
     if (pathname === '/contact.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'contact.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/console.html' || pathname === '/console') {
+      return serveStatic(res, join(PUBLIC_DIR, 'console.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/HARDWARE.md' || pathname === '/hardware.html') {
+      return serveStatic(res, join(PUBLIC_DIR, '..', 'HARDWARE.md'), 'text/markdown; charset=utf-8');
     }
     if (pathname === '/providers.html' || pathname === '/provider-pilot.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'providers.html'), 'text/html; charset=utf-8');

@@ -3,6 +3,7 @@
  */
 
 import { store, makeId } from './store.js';
+import { schedulePersist } from './db.js';
 
 const VALID_INTENTS = ['provider', 'customer', 'other'];
 
@@ -32,6 +33,7 @@ export function submitContact(body = {}) {
     created_at: new Date().toISOString(),
   };
   store.contactMessages.push(entry);
+  schedulePersist();
   return {
     contact_id: entry.contact_id,
     message: 'Thanks — we received your note and will follow up by email.',
