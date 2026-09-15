@@ -3,6 +3,8 @@
  */
 
 import { store, makeId } from './store.js';
+import { schedulePersist } from './db.js';
+import { createAttestChallenge, isLiveNode } from './agent.js';
 
 const VALID_INTERCONNECTS = ['NVLink', 'InfiniBand', 'PCIe', 'ICI', 'Ethernet', 'none'];
 const VALID_ACCELERATORS = ['gpu', 'tpu'];
@@ -35,6 +37,7 @@ export function registerNode(providerId, body) {
   const model = body.accelerator_model || body.gpu_model;
   const count = body.accelerator_count ?? body.gpu_count;
   const memory = body.memory_gb_per_chip ?? body.vram_gb_per_gpu;
+  const live = body.live === true || body.mode === 'live';
   const node = {
     node_id: makeId('node'),
     provider_id: providerId,
@@ -48,11 +51,18 @@ export function registerNode(providerId, body) {
     memory_gb_per_chip: memory,
     interconnect: body.interconnect || 'none',
     region: body.region,
+    live,
+    online: false,
+    agent_version: null,
+    last_heartbeat_at: null,
+    hardware_fingerprint: null,
+    agent_inventory: null,
     attestation_status: 'pending',
     attested_at: null,
     created_at: new Date().toISOString(),
   };
   store.nodes.set(node.node_id, node);
+  schedulePersist();
   return node;
 }
 
@@ -60,13 +70,31 @@ export function listNodes(providerId) {
   return [...store.nodes.values()].filter(n => n.provider_id === providerId);
 }
 
+/**
+ * Stub attest for demo/non-live nodes.
+ * Live nodes must use agent challenge/verify.
+ */
 export function attestNode(providerId, nodeId) {
   const node = store.nodes.get(nodeId);
   if (!node) { const e = new Error('node not found'); e.status = 404; throw e; }
   if (node.provider_id !== providerId) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
+
+  if (isLiveNode(node) && process.env.ALLOW_STUB_ATTEST !== '1') {
+    const e = new Error(
+      'Live nodes require agent attestation. POST /v1/nodes/:id/attest/challenge then verify via neo-agent.',
+    );
+    e.status = 400;
+    throw e;
+  }
+
   node.attestation_status = 'attested';
   node.attested_at = new Date().toISOString();
+  schedulePersist();
   return node;
+}
+
+export function beginAttest(providerId, nodeId) {
+  return createAttestChallenge(providerId, nodeId);
 }
 
 export function deregisterNode(providerId, nodeId) {
@@ -74,9 +102,8 @@ export function deregisterNode(providerId, nodeId) {
   if (!node) { const e = new Error('node not found'); e.status = 404; throw e; }
   if (node.provider_id !== providerId) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
 
-  // Check for active reservations on any listing that references this node
   const hasActive = [...store.reservations.values()].some(
-    r => r.node_id === nodeId && r.status === 'active'
+    r => r.node_id === nodeId && (r.status === 'active' || r.status === 'pending_provision'),
   );
   if (hasActive) {
     const e = new Error('Cannot deregister node with active reservations');
@@ -84,5 +111,6 @@ export function deregisterNode(providerId, nodeId) {
     throw e;
   }
   store.nodes.delete(nodeId);
+  schedulePersist();
   return { deleted: true };
 }

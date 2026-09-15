@@ -3,6 +3,7 @@
  */
 
 import { store, makeId, parsePrice, formatPrice, SCALE } from './store.js';
+import { schedulePersist } from './db.js';
 
 export function registerModel(providerId, body) {
   const { node_id, model_name, model_family, context_length, input_price_per_1k_tokens, output_price_per_1k_tokens } = body;
@@ -29,6 +30,7 @@ export function registerModel(providerId, body) {
     created_at: new Date().toISOString(),
   };
   store.models.set(model.model_id, model);
+  schedulePersist();
   return model;
 }
 
@@ -41,6 +43,7 @@ export function deleteModel(providerId, modelId) {
   if (!model) { const e = new Error('model not found'); e.status = 404; throw e; }
   if (model.provider_id !== providerId) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
   store.models.delete(modelId);
+  schedulePersist();
   return { deleted: true };
 }
 

@@ -3,6 +3,8 @@
  */
 
 import { store, makeId, parsePrice, formatPrice } from './store.js';
+import { schedulePersist } from './db.js';
+import { isLiveNode, isNodeOnline } from './agent.js';
 
 function validateListing(body) {
   const { node_id, price_per_hour } = body;
@@ -17,10 +19,13 @@ function validateListing(body) {
 function isListingAvailable(listing) {
   const node = store.nodes.get(listing.node_id);
   if (!node || node.attestation_status !== 'attested') return false;
-  const hasActive = [...store.reservations.values()].some(
-    r => r.listing_id === listing.listing_id && r.status === 'active'
+  // Live nodes must have a fresh agent heartbeat
+  if (isLiveNode(node) && !isNodeOnline(node)) return false;
+  const hasBusy = [...store.reservations.values()].some(
+    r => r.listing_id === listing.listing_id
+      && (r.status === 'active' || r.status === 'pending_provision'),
   );
-  return !hasActive;
+  return !hasBusy;
 }
 
 export function createListing(providerId, body) {
@@ -50,10 +55,17 @@ export function createListing(providerId, body) {
     tags: Array.isArray(body.tags) ? body.tags : [],
     view_count: 0,
     reservation_count: 0,
+    live: isLiveNode(node),
+    simulated: !isLiveNode(node),
     created_at: new Date().toISOString(),
   };
   store.listings.set(listing.listing_id, listing);
-  return { ...listing, available: isListingAvailable(listing) };
+  schedulePersist();
+  return {
+    ...listing,
+    available: isListingAvailable(listing),
+    node_online: isLiveNode(node) ? isNodeOnline(node) : null,
+  };
 }
 
 export function listListings(filters = {}) {
@@ -83,7 +95,16 @@ export function listListings(filters = {}) {
     results = results.filter(l => Array.isArray(l.tags) && l.tags.includes(workload));
   }
 
-  let withAvail = results.map(l => ({ ...l, available: isListingAvailable(l) }));
+  let withAvail = results.map(l => {
+    const node = store.nodes.get(l.node_id);
+    return {
+      ...l,
+      available: isListingAvailable(l),
+      live: isLiveNode(node),
+      simulated: !isLiveNode(node),
+      node_online: isLiveNode(node) ? isNodeOnline(node) : null,
+    };
+  });
 
   if (filters.available !== undefined) {
     const want = filters.available === 'true' || filters.available === true;
@@ -114,7 +135,15 @@ export function getListing(listingId) {
   const listing = store.listings.get(listingId);
   if (!listing) { const e = new Error('listing not found'); e.status = 404; throw e; }
   listing.view_count++;
-  return { ...listing, available: isListingAvailable(listing) };
+  schedulePersist();
+  const node = store.nodes.get(listing.node_id);
+  return {
+    ...listing,
+    available: isListingAvailable(listing),
+    live: isLiveNode(node),
+    simulated: !isLiveNode(node),
+    node_online: isLiveNode(node) ? isNodeOnline(node) : null,
+  };
 }
 
 export function updateListing(providerId, listingId, body) {
@@ -126,6 +155,7 @@ export function updateListing(providerId, listingId, body) {
   if (body.spot !== undefined) listing.spot = body.spot === true;
   if (body.tags !== undefined && Array.isArray(body.tags)) listing.tags = body.tags;
   if (body.max_hours !== undefined) { if (!Number.isInteger(body.max_hours) || body.max_hours < 1) throw new Error('max_hours must be integer >= 1'); listing.max_hours = body.max_hours; }
+  schedulePersist();
   return { ...listing, available: isListingAvailable(listing) };
 }
 
@@ -134,6 +164,7 @@ export function deleteListing(providerId, listingId) {
   if (!listing) { const e = new Error('listing not found'); e.status = 404; throw e; }
   if (listing.provider_id !== providerId) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
   store.listings.delete(listingId);
+  schedulePersist();
   return { deleted: true };
 }
 

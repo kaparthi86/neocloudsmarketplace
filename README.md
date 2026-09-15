@@ -31,9 +31,12 @@ npm start
 ## Features
 
 - GPU listings, reservations, provider nodes + attestation
+- **Live hardware connect:** neo-agent heartbeat, challenge attest, provision ack — see [HARDWARE.md](./HARDWARE.md)
 - OpenAI-compatible `/v1/chat/completions` with streaming
 - Public browse; API keys for reserve and inference
 - Provider pilot waitlist: [/providers.html](./public/providers.html) · [PROVIDER-PILOT.md](./PROVIDER-PILOT.md)
+- Provider console: [/console.html](./public/console.html)
+- SQLite persistence (`NEO_DB_PATH`)
 - Privacy, Terms, health check, beta banner
 
 ## API

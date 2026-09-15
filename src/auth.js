@@ -4,6 +4,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { store, makeId } from './store.js';
+import { schedulePersist } from './db.js';
 
 function generateKey(role) {
   const prefix = role === 'provider' ? 'nkp' : 'nck';
@@ -33,6 +34,7 @@ export function registerAccount({ name, email, role, api_key: fixedKey }) {
   store.accounts.set(api_key, account);
   store.accountsByEmail.set(email, account);
   store.accountsById.set(account.account_id, account);
+  schedulePersist();
   return account;
 }
 

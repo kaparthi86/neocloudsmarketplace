@@ -18,6 +18,8 @@ services:
         value: neocloudsmarketplace.com
       - key: SEED_DEMO
         value: "1"
+      - key: NEO_DB_PATH
+        value: data/neo-clouds.sqlite
       - key: BETA_TESTING
         value: "0"
       - key: BETA_MESSAGE

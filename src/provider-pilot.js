@@ -4,6 +4,7 @@
  */
 
 import { store, makeId } from './store.js';
+import { schedulePersist } from './db.js';
 
 const VALID_ACCELERATORS = ['gpu', 'tpu'];
 const VALID_WORKLOADS = ['training', 'inference', 'fine-tune', 'other'];
@@ -112,6 +113,7 @@ export function submitProviderPilot(body = {}) {
   };
 
   store.providerPilot.push(entry);
+  schedulePersist();
   return {
     interest_id: entry.interest_id,
     status: entry.status,

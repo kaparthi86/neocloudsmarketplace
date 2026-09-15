@@ -1,9 +1,12 @@
 /**
- * Reservations — full lifecycle: pending → active → completed | cancelled
+ * Reservations — lifecycle: pending_provision → active → completed | cancelled
+ * Demo nodes stay simulated; live nodes require agent provision ack.
  */
 
 import { store, makeId, parsePrice, formatPrice } from './store.js';
 import { isListingAvailable } from './listings.js';
+import { isLiveNode, isNodeOnline } from './agent.js';
+import { schedulePersist } from './db.js';
 
 export function createReservation(customerId, body) {
   const { listing_id, hours, starts_at } = body;
@@ -26,6 +29,7 @@ export function createReservation(customerId, body) {
   const startsAt = starts_at ? new Date(starts_at) : new Date();
   const endsAt = new Date(startsAt.getTime() + hours * 3600_000);
 
+  const live = isLiveNode(node) && isNodeOnline(node);
   const reservation = {
     reservation_id: makeId('res'),
     listing_id,
@@ -35,23 +39,30 @@ export function createReservation(customerId, body) {
     hours,
     total_price: formatPrice(total),
     currency: 'USD',
-    simulated: true,
+    simulated: !live,
     payment_collected: false,
-    status: 'active',
+    status: live ? 'pending_provision' : 'active',
     reserved_at: new Date().toISOString(),
     starts_at: startsAt.toISOString(),
     ends_at: endsAt.toISOString(),
+    provisioned_at: null,
     cancelled_at: null,
     cancellation_reason: null,
-    connection_info: {
-      ssh_host: node.hostname,
-      ssh_port: 22,
-      note: 'Simulated reservation. No real SSH or accelerator is provisioned. You were not charged.',
-    },
+    connection_info: live
+      ? {
+          status: 'awaiting_agent',
+          note: 'Live reservation queued. Waiting for provider neo-agent to provision access. No payment collected.',
+        }
+      : {
+          ssh_host: node?.hostname || null,
+          ssh_port: 22,
+          note: 'Simulated reservation. No real SSH or accelerator is provisioned. You were not charged.',
+        },
   };
 
   store.reservations.set(reservation.reservation_id, reservation);
   listing.reservation_count++;
+  schedulePersist();
   return reservation;
 }
 
@@ -87,6 +98,7 @@ export function cancelReservation(account, reservationId, reason) {
   r.status = 'cancelled';
   r.cancelled_at = new Date().toISOString();
   r.cancellation_reason = reason || null;
+  schedulePersist();
   return r;
 }
 
@@ -96,5 +108,6 @@ export function completeReservation(providerId, reservationId) {
   if (r.provider_id !== providerId) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
   if (r.status !== 'active') { const e = new Error('only active reservations can be completed'); e.status = 409; throw e; }
   r.status = 'completed';
+  schedulePersist();
   return r;
 }

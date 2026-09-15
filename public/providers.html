@@ -50,6 +50,7 @@
     <a href="/">Home</a>
     <a href="/marketplace">Marketplace</a>
     <a href="/providers.html" class="active">Providers</a>
+    <a href="/console.html">Console</a>
     <a href="/about.html">About</a>
     <a href="/contact.html">Contact</a>
   </div>
@@ -61,8 +62,8 @@
   <div class="callout">
     <strong>Early-access honesty</strong>
     <ul>
-      <li>Listings, reservations, and inference on the public site are still <strong>simulated</strong>.</li>
-      <li>Joining the waitlist does <strong>not</strong> turn on live jobs or payouts.</li>
+      <li>Demo catalog rows stay <strong>simulated</strong>. Live nodes use the <a href="/console.html">provider console</a> + neo-agent.</li>
+      <li>Joining the waitlist does <strong>not</strong> turn on payouts or payments.</li>
       <li>API keys for providers exist for dry-run listing; expect the environment to reset while we are in pilot.</li>
     </ul>
   </div>
@@ -159,8 +160,8 @@ curl -s -X POST https://neocloudsmarketplace.com/v1/listings \
   <h2>4. What happens next</h2>
   <ul>
     <li>We review waitlist inventory and follow up by email.</li>
-    <li>When real connect/attest and persistence ship, we will invite pilots to go live.</li>
-    <li>Until then, treat the marketplace as a demo surface for buyers and a dry-run for providers.</li>
+    <li>Ready to connect hardware now? Use the <a href="/console.html">provider console</a> and <a href="/HARDWARE.md">HARDWARE.md</a> guide (neo-agent heartbeat + attest + provision).</li>
+    <li>Payments and automatic SSH user creation are still disabled — agent acks with connection info you configure on the host.</li>
   </ul>
 </main>
 <footer class="site-footer">

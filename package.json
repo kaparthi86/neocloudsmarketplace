@@ -5,9 +5,10 @@
   "description": "Open-source GPU compute marketplace",
   "scripts": {
     "start": "node src/marketplace.js",
-    "test": "node --test test/marketplace.test.js"
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "agent": "node scripts/neo-agent.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }
