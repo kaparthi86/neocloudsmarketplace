@@ -4,6 +4,7 @@ Open GPU marketplace and inference platform — **separate from [Student AI Hub]
 
 **Live site:** [neocloudsmarketplace.com](https://neocloudsmarketplace.com)  
 **Launch guide:** [LAUNCH.md](./LAUNCH.md)  
+**System design:** [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) · [HTML](./public/system-design.html) · [PDF](./public/system-design.pdf)  
 **Product boundary:** [PRODUCT.md](./PRODUCT.md)
 
 Providers list **GPUs and TPUs**. Customers browse by accelerator type, model, region, and price, reserve hours, and call models via an OpenAI-compatible API.

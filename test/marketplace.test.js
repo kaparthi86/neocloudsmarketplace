@@ -492,6 +492,14 @@ describe('7 – HTTP integration', async () => {
     assert.match(await contact.text(), /Contact/i);
   });
 
+  it('GET /system-design.html is served', async () => {
+    const res = await fetch(`${base(server)}/system-design.html`);
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.match(html, /System Design/i);
+    assert.match(html, /mermaid/);
+  });
+
   it('POST /v1/contact accepts inbound messages', async () => {
     const before = await req(server, 'GET', '/v1/contact');
     const r = await req(server, 'POST', '/v1/contact', {
