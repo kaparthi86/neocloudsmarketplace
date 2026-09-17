@@ -415,6 +415,15 @@ export function createMarketplaceServer() {
     if (pathname === '/console.html' || pathname === '/console') {
       return serveStatic(res, join(PUBLIC_DIR, 'console.html'), 'text/html; charset=utf-8');
     }
+    if (pathname === '/system-design.html' || pathname === '/system-design') {
+      return serveStatic(res, join(PUBLIC_DIR, 'system-design.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/system-design.pdf') {
+      return serveStatic(res, join(PUBLIC_DIR, 'system-design.pdf'), 'application/pdf');
+    }
+    if (pathname === '/SYSTEM_DESIGN.md' || pathname === '/system-design.md') {
+      return serveStatic(res, join(PUBLIC_DIR, '..', 'SYSTEM_DESIGN.md'), 'text/markdown; charset=utf-8');
+    }
     if (pathname === '/HARDWARE.md' || pathname === '/hardware.html') {
       return serveStatic(res, join(PUBLIC_DIR, '..', 'HARDWARE.md'), 'text/markdown; charset=utf-8');
     }

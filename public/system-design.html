@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Neo Clouds system design — marketplace control plane architecture for unused GPUs and TPUs.">
+<meta name="theme-color" content="#0d1117">
+<link rel="canonical" href="https://neocloudsmarketplace.com/system-design.html">
+<link rel="stylesheet" href="/site.css">
+<title>System Design — Neo Clouds</title>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { curve: 'basis', htmlLabels: true },
+    sequence: { actorMargin: 28 },
+  });
+  window.__mermaidReady = mermaid.run
+    ? mermaid.run({ querySelector: '.mermaid' }).then(() => { document.documentElement.dataset.diagrams = 'ready'; })
+    : Promise.resolve().then(() => { document.documentElement.dataset.diagrams = 'ready'; });
+</script>
+<style>
+  .doc {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .doc-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 22px;
+    margin-bottom: 28px;
+  }
+  .doc-header h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    color: #fff;
+    margin-bottom: 10px;
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .meta strong { color: var(--gold); font-weight: 600; }
+  .lede {
+    margin-top: 16px;
+    color: var(--text);
+    max-width: 62ch;
+    font-size: 1.05rem;
+  }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .doc h2 {
+    font-size: 1.25rem;
+    color: var(--gold);
+    margin: 36px 0 12px;
+    font-weight: 600;
+  }
+  .doc h3 {
+    font-size: 1.02rem;
+    color: #fff;
+    margin: 22px 0 10px;
+    font-weight: 600;
+  }
+  .doc p, .doc li { color: var(--text); margin-bottom: 10px; max-width: 68ch; }
+  .doc ul, .doc ol { padding-left: 1.25rem; margin-bottom: 14px; }
+  .doc li { margin: 6px 0; }
+  .doc code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86em;
+    color: var(--blue);
+    background: rgba(88,166,255,.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin: 16px 0 20px;
+    overflow-x: auto;
+  }
+  .mermaid { display: flex; justify-content: center; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+  .note {
+    border-left: 3px solid var(--gold);
+    background: rgba(240,180,41,.08);
+    padding: 12px 14px;
+    margin: 14px 0 20px;
+    color: var(--text);
+    font-size: 0.92rem;
+  }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin: 20px 0 28px;
+  }
+  .toc h2 { margin-top: 0; font-size: 1rem; }
+  .toc ol { margin: 0; columns: 2; column-gap: 24px; }
+  @media (max-width: 700px) { .toc ol { columns: 1; } }
+  .toc a { color: var(--blue); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .footer-actions { margin-top: 40px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  @media print {
+    .honesty-banner, .site-nav, .toolbar, .footer-actions, .site-footer, .no-print { display: none !important; }
+    body { background: #fff; color: #111; }
+    .doc { max-width: none; padding: 0; }
+    .doc-header h1, .doc h2, .doc h3, .meta strong { color: #111; }
+    .meta, .doc p, .doc li, th, td { color: #222; }
+    .diagram, .toc, .note {
+      background: #fff;
+      border-color: #ccc;
+      break-inside: avoid;
+    }
+    .doc h2 { break-after: avoid; page-break-after: avoid; }
+    a { color: #111; text-decoration: none; }
+    .doc code { color: #111; background: #f3f3f3; }
+  }
+</style>
+</head>
+<body>
+<div class="honesty-banner no-print">System design — early-access control plane. Payments disabled. Live nodes use neo-agent.</div>
+<nav class="site-nav no-print">
+  <a class="logo" href="/">☁ Neo Clouds</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/marketplace">Marketplace</a>
+    <a href="/console.html">Console</a>
+    <a href="/system-design.html" class="active">System design</a>
+    <a href="/about.html">About</a>
+    <a href="/contact.html">Contact</a>
+  </div>
+</nav>
+
+<main class="doc">
+  <header class="doc-header">
+    <h1>Neo Clouds — System Design</h1>
+    <p class="meta">
+      <strong>Status:</strong> Early access / working prototype<br>
+      <strong>Site:</strong> neocloudsmarketplace.com<br>
+      <strong>Version:</strong> 1.0 · September 2026<br>
+      <strong>Source:</strong> <a href="/SYSTEM_DESIGN.md">SYSTEM_DESIGN.md</a>
+      · <a href="/system-design.pdf">Download PDF</a>
+    </p>
+    <p class="lede">
+      Control-plane architecture for an open marketplace that turns unused GPUs and TPUs into discoverable, reservable capacity.
+      Supply aggregation and market discovery first; full orchestration, payments, and confidential multi-tenancy later.
+    </p>
+    <div class="toolbar no-print">
+      <button class="btn btn-gold" type="button" onclick="window.print()">Print / Save as PDF</button>
+      <a class="btn btn-outline" href="/system-design.pdf">Download PDF</a>
+      <a class="btn btn-outline" href="/HARDWARE.md">Hardware guide</a>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#goals">Goals and non-goals</a></li>
+      <li><a href="#principles">Design principles</a></li>
+      <li><a href="#hl">High-level architecture</a></li>
+      <li><a href="#components">Logical components</a></li>
+      <li><a href="#domain">Domain model</a></li>
+      <li><a href="#agent">Live agent protocol</a></li>
+      <li><a href="#catalog">Catalog and discovery</a></li>
+      <li><a href="#api">API map</a></li>
+      <li><a href="#data">Data and persistence</a></li>
+      <li><a href="#trust">Trust model</a></li>
+      <li><a href="#deploy">Deployment</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+      <li><a href="#flows">Buyer / seller flows</a></li>
+      <li><a href="#summary">Summary</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="goals">1. Goals and non-goals</h2>
+  <h3>Goals</h3>
+  <table>
+    <thead><tr><th>Goal</th><th>Design implication</th></tr></thead>
+    <tbody>
+      <tr><td>Unused → online</td><td>Providers list idle accelerators; live nodes require agent presence</td></tr>
+      <tr><td>Low / transparent cost</td><td>Listed $/hr in catalog; payments disabled in early access</td></tr>
+      <tr><td>Open</td><td>Open APIs, open catalog axes, open-source control plane</td></tr>
+      <tr><td>Trust asymmetry reduced</td><td>Challenge attest (identity) ≠ heartbeat (liveness)</td></tr>
+      <tr><td>Builder-friendly</td><td>REST + OpenAI-compatible inference surface</td></tr>
+    </tbody>
+  </table>
+  <h3>Non-goals (current generation)</h3>
+  <ul>
+    <li>Automatic SSH user / container provisioning on provider hosts</li>
+    <li>Payments, escrow, or payouts</li>
+    <li>Cross-cloud job scheduler (Sky-style planner is a future consumer)</li>
+    <li>Confidential computing / TEE-backed isolation</li>
+    <li>Guaranteed SLA fleets at hyperscaler scale</li>
+  </ul>
+
+  <h2 id="principles">2. Design principles</h2>
+  <ol>
+    <li><strong>Separate catalog truth from demo UX.</strong> Seeded inventory may be simulated; live nodes are explicit and gated by attest + heartbeat.</li>
+    <li><strong>Thin provider integration.</strong> Host-side <code>neo-agent</code> is enough to go live.</li>
+    <li><strong>Availability is derived.</strong> Computed from attestation, heartbeat TTL, and reservation conflicts.</li>
+    <li><strong>Workload-aware discovery.</strong> Hardware × workload tags × price.</li>
+    <li><strong>Honest early access.</strong> UI/API advertise simulated vs live; no payment collection.</li>
+  </ol>
+
+  <h2 id="hl">3. High-level architecture</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart TB
+  subgraph Clients
+    Buyer["Customer browser / API"]
+    ProvUI["Provider console"]
+    Agent["neo-agent on GPU/TPU host"]
+  end
+  subgraph Edge["Edge / DNS"]
+    CF["Cloudflare proxy + Web Analytics"]
+  end
+  subgraph ControlPlane["Neo Clouds control plane Render"]
+    HTTP["Node HTTP server"]
+    API["REST /v1"]
+    Static["Static pages"]
+    Store["In-memory store"]
+    DB["SQLite snapshot"]
+  end
+  subgraph Domains["Domain modules"]
+    Auth["auth"]
+    Nodes["providers + agent"]
+    List["listings"]
+    Res["reservations"]
+    Inf["inference"]
+    Pilot["pilot / contact"]
+  end
+  Buyer --> CF
+  ProvUI --> CF
+  Agent --> CF
+  CF --> HTTP
+  HTTP --> Static
+  HTTP --> API
+  API --> Domains
+  Domains --> Store
+  Store <--> DB
+  </pre></div>
+  <p><strong>Runtime:</strong> single Node.js process (<code>npm start</code>). <strong>Host:</strong> Render. <strong>Domain:</strong> neocloudsmarketplace.com via Cloudflare → Render.</p>
+
+  <h2 id="components">4. Logical component view</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  subgraph Presentation
+    Home["/ marketing"]
+    Mkt["/marketplace"]
+    Console["/console.html"]
+    PilotPage["/providers.html"]
+  end
+  subgraph API["Marketplace API"]
+    A["Auth"]
+    N["Nodes"]
+    L["Listings"]
+    R["Reservations"]
+    G["Agent"]
+    I["Inference"]
+  end
+  subgraph Data
+    S["store"]
+    Q["SQLite"]
+  end
+  Home --> A
+  Mkt --> L
+  Mkt --> R
+  Mkt --> I
+  Console --> N
+  Console --> L
+  Console --> G
+  A --> S
+  N --> S
+  L --> S
+  R --> S
+  G --> S
+  I --> S
+  S --> Q
+  </pre></div>
+  <table>
+    <thead><tr><th>Module</th><th>Path</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr><td>Entry</td><td><code>src/marketplace.js</code></td><td>Boot, persistence, seed, listen</td></tr>
+      <tr><td>HTTP</td><td><code>src/server.js</code></td><td>Routes, static assets, health</td></tr>
+      <tr><td>Store</td><td><code>src/store.js</code></td><td>Process-local source of truth</td></tr>
+      <tr><td>DB</td><td><code>src/db.js</code></td><td>Debounced SQLite snapshot</td></tr>
+      <tr><td>Auth</td><td><code>src/auth.js</code></td><td>Accounts, API keys, roles</td></tr>
+      <tr><td>Providers</td><td><code>src/providers.js</code></td><td>Node register, stub attest, challenge begin</td></tr>
+      <tr><td>Agent</td><td><code>src/agent.js</code></td><td>Heartbeat, verify, pending, ack</td></tr>
+      <tr><td>Listings</td><td><code>src/listings.js</code></td><td>CRUD, filters, derived availability</td></tr>
+      <tr><td>Reservations</td><td><code>src/reservations.js</code></td><td>Simulated vs live lifecycle</td></tr>
+      <tr><td>Inference</td><td><code>src/inference.js</code></td><td>Models + chat completions</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="domain">5. Core domain model</h2>
+  <div class="diagram"><pre class="mermaid">
+erDiagram
+  ACCOUNT ||--o{ NODE : owns
+  ACCOUNT ||--o{ LISTING : publishes
+  ACCOUNT ||--o{ RESERVATION : buys
+  NODE ||--o{ LISTING : backs
+  LISTING ||--o{ RESERVATION : books
+  NODE ||--o{ ATTEST_CHALLENGE : proves
+  ACCOUNT {
+    string account_id
+    string role
+    string api_key
+  }
+  NODE {
+    string node_id
+    boolean live
+    string attestation_status
+    datetime last_heartbeat_at
+  }
+  LISTING {
+    string listing_id
+    string price_per_hour
+    boolean live
+  }
+  RESERVATION {
+    string reservation_id
+    string status
+    boolean simulated
+  }
+  </pre></div>
+  <h3>Reservation status machine</h3>
+  <div class="diagram"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> active: demo / non-live reserve
+  [*] --> pending_provision: live + online reserve
+  pending_provision --> active: agent ack
+  active --> completed: provider complete
+  active --> cancelled: cancel
+  pending_provision --> cancelled: cancel
+  </pre></div>
+  <table>
+    <thead><tr><th>Kind</th><th>On reserve</th><th>Connection info</th></tr></thead>
+    <tbody>
+      <tr><td>Simulated / demo</td><td><code>active</code> immediately</td><td>Placeholder note</td></tr>
+      <tr><td>Live (attested + heartbeat)</td><td><code>pending_provision</code></td><td>Filled on agent ack</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="agent">6. Live hardware connect (agent protocol)</h2>
+  <div class="note">Aligned with the research paper: <strong>attestation ≠ liveness</strong>. Attest proves identity; heartbeat proves the node is online now.</div>
+  <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  participant P as Provider console
+  participant API as Control plane
+  participant A as neo-agent
+  participant C as Customer
+  P->>API: POST /v1/nodes live true
+  API-->>P: node_id
+  A->>API: attest challenge
+  API-->>A: nonce
+  A->>API: attest verify
+  API-->>A: attested
+  loop every 30s
+    A->>API: heartbeat
+    API-->>A: online + pending
+  end
+  P->>API: create listing
+  C->>API: reserve
+  API-->>C: pending_provision
+  A->>API: pending + ack
+  API-->>C: active + connection_info
+  </pre></div>
+  <h3>Availability predicate (live)</h3>
+  <ol>
+    <li>Node exists and <code>attestation_status === attested</code></li>
+    <li>Fresh heartbeat within TTL (default 90s)</li>
+    <li>No conflicting <code>active</code> / <code>pending_provision</code> reservation</li>
+  </ol>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>POST</td><td><code>/v1/agent/heartbeat</code></td><td>Mark online</td></tr>
+      <tr><td>POST</td><td><code>/v1/nodes/:id/attest/challenge</code></td><td>Issue nonce</td></tr>
+      <tr><td>POST</td><td><code>/v1/agent/attest/verify</code></td><td>Bind fingerprint proof</td></tr>
+      <tr><td>GET</td><td><code>/v1/agent/nodes/:id/pending</code></td><td>List pending jobs</td></tr>
+      <tr><td>POST</td><td><code>/v1/agent/reservations/:id/ack</code></td><td>SSH / connection details</td></tr>
+    </tbody>
+  </table>
+  <p>Host binary: <code>scripts/neo-agent.mjs</code>.</p>
+
+  <h2 id="catalog">7. Catalog and discovery</h2>
+  <table>
+    <thead><tr><th>Axis</th><th>Mechanism</th></tr></thead>
+    <tbody>
+      <tr><td>Hardware</td><td><code>accelerator_type</code>, model, interconnect, <code>min_vram_gb</code></td></tr>
+      <tr><td>Workload</td><td><code>workload</code> / tags (training, inference, fine-tune)</td></tr>
+      <tr><td>Price</td><td><code>max_price_per_hour</code>, <code>sort=price_asc|price_desc</code></td></tr>
+      <tr><td>Availability</td><td><code>available=true|false</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="api">8. API map</h2>
+  <h3>Public / lightly gated</h3>
+  <p>Health, auth register/me, listings browse, models, stats, contact, provider pilot.</p>
+  <h3>Provider-authenticated</h3>
+  <p>Nodes, listings CRUD, challenge begin, agent routes, reservation complete.</p>
+  <h3>Customer-authenticated</h3>
+  <p>Reservations, chat completions, usage.</p>
+
+  <h2 id="data">9. Data and persistence</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  Mutate["Domain mutation"] --> Store["store Maps"]
+  Store --> Sched["schedulePersist"]
+  Sched --> Snap["JSON snapshot"]
+  Snap --> SQLite["SQLite kv"]
+  Boot["initPersistence"] --> Load["loadSnapshot"]
+  Load --> Store
+  </pre></div>
+  <ul>
+    <li><strong>Runtime source of truth:</strong> in-process store</li>
+    <li><strong>Durability:</strong> SQLite via <code>NEO_DB_PATH</code></li>
+    <li><strong>Deploy caveat:</strong> attach a persistent disk for <code>data/</code> on Render</li>
+  </ul>
+
+  <h2 id="trust">10. Trust model</h2>
+  <table>
+    <thead><tr><th>Risk</th><th>Current mitigation</th><th>Future</th></tr></thead>
+    <tbody>
+      <tr><td>Stale availability</td><td>Heartbeat TTL</td><td>SLA / reputation</td></tr>
+      <tr><td>Fake hardware</td><td>Challenge + fingerprint; stub blocked on live</td><td>Device attestation</td></tr>
+      <tr><td>Malicious workloads</td><td>Provider-managed SSH</td><td>Containers / VMs / TEEs</td></tr>
+      <tr><td>Key leakage</td><td>Bearer API keys</td><td>Scoped keys, rotation</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Payments:</strong> disabled. Listed prices are discovery signals only.</p>
+
+  <h2 id="deploy">11. Deployment</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart TB
+  User["Client"] --> DNS["DNS"]
+  DNS --> CF["Cloudflare"]
+  CF --> Render["Render web service"]
+  Render --> App["marketplace.js"]
+  App --> Disk["SQLite"]
+  AgentHost["Provider GPU host"] --> CF
+  </pre></div>
+
+  <h2 id="roadmap">12. Target architecture (roadmap)</h2>
+  <div class="diagram"><pre class="mermaid">
+flowchart TB
+  subgraph Now["Now v1"]
+    CP["API + agent"]
+    Cat["Catalog H x W x P"]
+    SQL["SQLite"]
+  end
+  subgraph Next["Next"]
+    Prov["Auto provision"]
+    Pay["Payments"]
+    PG["Postgres"]
+    InfLive["Live inference"]
+  end
+  subgraph Later["Later"]
+    Match["Matching engine"]
+    Secure["TEE tenancy"]
+    Sky["Sky planners"]
+    Trace["Public traces"]
+  end
+  Now --> Next --> Later
+  </pre></div>
+
+  <h2 id="flows">13. Key sequences</h2>
+  <h3>Seller (live)</h3>
+  <ol>
+    <li>Provider key → <code>/console.html</code></li>
+    <li>Register live node</li>
+    <li>Run <code>neo-agent</code></li>
+    <li>Publish listing</li>
+    <li>Ack customer reservations</li>
+  </ol>
+  <h3>Buyer</h3>
+  <ol>
+    <li>Browse <code>/marketplace</code></li>
+    <li>Get customer API key</li>
+    <li>Reserve hours</li>
+    <li>LIVE → wait for <code>active</code> + <code>connection_info</code></li>
+    <li>SIMULATED → demo reservation only</li>
+  </ol>
+
+  <h2 id="summary">14. Summary</h2>
+  <p>
+    Neo Clouds is a <strong>marketplace control plane</strong>: auth, node identity, listing discovery,
+    reservation lifecycle, and an agent protocol that binds live supply to attested, heartbeating hosts.
+    It ships an open unused-accelerator exchange first, then grows toward matching, secure multi-tenancy,
+    and measured utilization.
+  </p>
+
+  <div class="footer-actions no-print">
+    <button class="btn btn-gold" type="button" onclick="window.print()">Print / Save as PDF</button>
+    <a class="btn btn-outline" href="/system-design.pdf">Download PDF</a>
+    <a class="btn btn-outline" href="/marketplace">Marketplace</a>
+    <a class="btn btn-outline" href="/console.html">Provider console</a>
+  </div>
+</main>
+
+<footer class="site-footer no-print">
+  <p>Neo Clouds · System design · Early access</p>
+  <p>
+    <a href="/">Home</a>
+    <a href="/SYSTEM_DESIGN.md">Markdown</a>
+    <a href="/system-design.pdf">PDF</a>
+    <a href="/HARDWARE.md">Hardware</a>
+    <a href="/contact.html">Contact</a>
+  </p>
+</footer>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "569428726ee749568232deb511c64752"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

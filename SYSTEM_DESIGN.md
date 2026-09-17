@@ -4,6 +4,7 @@
 **Canonical site:** https://neocloudsmarketplace.com  
 **Aligned paper:** `papers/neo-clouds-unused-accelerator-marketplace.md` (research preprint; open/merge that PR if not on `main` yet)  
 **Hardware connect guide:** [HARDWARE.md](./HARDWARE.md)  
+**HTML:** [/system-design.html](./public/system-design.html) · **PDF:** [/system-design.pdf](./public/system-design.pdf)  
 **Version:** 1.0 · September 2026
 
 This document describes the **control-plane architecture** for an open marketplace that turns *unused* GPUs and TPUs into discoverable, reservable capacity. It matches the preprint’s framing: supply aggregation and market discovery first; full cluster orchestration, payments, and confidential multi-tenancy as later layers.
