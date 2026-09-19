@@ -7,7 +7,8 @@
 3. Spare accelerators shouldn’t sit dark while teams wait on quotes
 
 **Tone:** executive · ~900 words · paste into LinkedIn Article  
-**CTA:** neocloudsmarketplace.com · hellonecoloudsmarketplace@googlegroups.com
+**CTA:** neocloudsmarketplace.com · hellonecoloudsmarketplace@googlegroups.com  
+**PDF:** [linkedin-executive-article.pdf](./linkedin-executive-article.pdf) · HTML: `/linkedin-executive-article.html`
 
 ---
 
