@@ -415,6 +415,16 @@ export function createMarketplaceServer() {
     if (pathname === '/console.html' || pathname === '/console') {
       return serveStatic(res, join(PUBLIC_DIR, 'console.html'), 'text/html; charset=utf-8');
     }
+    if (
+      pathname === '/linkedin-executive-article.html'
+      || pathname === '/linkedin-article.html'
+      || pathname === '/linkedin-article'
+    ) {
+      return serveStatic(res, join(PUBLIC_DIR, 'linkedin-executive-article.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/linkedin-executive-article.pdf' || pathname === '/linkedin-article.pdf') {
+      return serveStatic(res, join(PUBLIC_DIR, 'linkedin-executive-article.pdf'), 'application/pdf');
+    }
     if (pathname === '/system-design.html' || pathname === '/system-design') {
       return serveStatic(res, join(PUBLIC_DIR, 'system-design.html'), 'text/html; charset=utf-8');
     }
