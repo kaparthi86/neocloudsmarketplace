@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The AI bottleneck isn’t only chips. It’s unused capacity. — Neo Clouds</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --ink: #12151a;
+    --muted: #5c6570;
+    --line: #e6e8eb;
+    --gold: #b8860b;
+    --accent: #1a4f8b;
+    --bg: #f7f6f3;
+    --card: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', Georgia, sans-serif;
+    line-height: 1.65;
+    font-size: 16px;
+  }
+
+  .sheet {
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 48px 28px 64px;
+    background: var(--card);
+    min-height: 100vh;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+
+  .brand {
+    font-size: 0.78rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 4.5vw, 2.75rem);
+    line-height: 1.15;
+    margin-bottom: 14px;
+    color: var(--ink);
+  }
+
+  .dek {
+    color: var(--muted);
+    font-size: 1.05rem;
+    margin-bottom: 28px;
+    max-width: 38em;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    padding: 12px 0 22px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 28px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .meta strong { color: var(--ink); font-weight: 600; }
+
+  h2 {
+    font-size: 1.15rem;
+    margin: 28px 0 10px;
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  p { margin-bottom: 14px; max-width: 40em; }
+
+  ul, ol { margin: 0 0 16px 1.2em; max-width: 38em; }
+  li { margin: 6px 0; }
+
+  strong { font-weight: 650; }
+
+  .pull {
+    margin: 22px 0;
+    padding: 14px 18px;
+    border-left: 3px solid var(--gold);
+    background: #faf7ef;
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 1.25rem;
+    line-height: 1.35;
+    color: var(--ink);
+  }
+
+  a { color: var(--accent); }
+
+  .cta {
+    margin-top: 32px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    background: #fafafa;
+  }
+
+  .cta p { margin-bottom: 8px; }
+  .cta .contact { font-weight: 600; color: var(--ink); }
+
+  .footer {
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgba(247,246,243,.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 16px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .toolbar button, .toolbar a {
+    appearance: none;
+    border: 1px solid #c9ced6;
+    background: #fff;
+    color: var(--ink);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .toolbar .primary {
+    background: #12151a;
+    color: #fff;
+    border-color: #12151a;
+  }
+
+  @media print {
+    .toolbar { display: none !important; }
+    body { background: #fff; }
+    .sheet {
+      border: none;
+      max-width: none;
+      padding: 0;
+      min-height: 0;
+    }
+    a { color: inherit; text-decoration: none; }
+    .pull, .cta { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button class="primary" type="button" onclick="window.print()">Print / Save as PDF</button>
+  <a href="/linkedin-executive-article.pdf">Download PDF</a>
+  <a href="https://neocloudsmarketplace.com">neocloudsmarketplace.com</a>
+</div>
+
+<article class="sheet">
+  <p class="brand">Neo Clouds · Executive brief</p>
+  <h1>The AI bottleneck isn’t only chips. It’s unused capacity.</h1>
+  <p class="dek">An open marketplace thesis for bringing idle GPUs and TPUs online — at transparent cost, without overclaiming readiness.</p>
+
+  <div class="meta">
+    <span><strong>Audience:</strong> infrastructure &amp; AI platform leaders</span>
+    <span><strong>Length:</strong> ~4 min read</span>
+    <span><strong>Contact:</strong> hellonecoloudsmarketplace@googlegroups.com</span>
+  </div>
+
+  <p>Every board conversation about AI eventually lands on the same constraint: <strong>compute</strong>.</p>
+
+  <p>We talk about H100s and TPUs as if scarcity is absolute. In practice, scarcity is uneven. Hyperscalers are booked. Procurement cycles are slow. Quotes arrive late. Meanwhile, a quieter fact sits in plain sight:</p>
+
+  <p class="pull">A meaningful share of accelerators are already purchased — and idle.</p>
+
+  <p>They sit in neo-clouds, research labs, enterprises, and colocation rooms. Powered. Depreciating. Offline to the market that needs them most.</p>
+
+  <p>That gap — between <em>owned silicon</em> and <em>reachable capacity</em> — is the problem Neo Clouds is built to close.</p>
+
+  <h2>The real failure mode</h2>
+  <p>AI teams do not only lack chips. They lack <strong>liquidity</strong>.</p>
+  <p>Liquidity means:</p>
+  <ul>
+    <li>Can I find the right accelerator quickly?</li>
+    <li>Can I trust it is actually online?</li>
+    <li>Can I reserve it without a week of emails?</li>
+    <li>Can I do that at a transparent listed rate?</li>
+  </ul>
+  <p>Today, secondary capacity is fragmented. Buyers chase bilateral deals. Sellers have no clean distribution channel. The result is predictable: overpaying where capacity is branded, and underusing capacity where it is not.</p>
+  <p>Spot markets inside a single cloud help utilization <em>inside that cloud</em>. They do not aggregate unused GPUs and TPUs across neo-clouds, labs, and independent operators into one discoverable catalog.</p>
+
+  <h2>What Neo Clouds is</h2>
+  <p><strong>Neo Clouds is an open marketplace for unused accelerators.</strong></p>
+  <p>The product thesis is deliberately simple:</p>
+  <ol>
+    <li><strong>Unused → online</strong> — bring idle GPUs and TPUs into a shared market</li>
+    <li><strong>Low / transparent cost</strong> — listed rates buyers can compare</li>
+    <li><strong>Open</strong> — open catalog, open APIs, open-source control plane</li>
+  </ol>
+  <p>Customers browse by <strong>hardware</strong>, <strong>workload intent</strong> (training / inference / fine-tune), and <strong>price</strong> — not by opaque SKUs alone. Providers list capacity and, for live nodes, connect through a lightweight agent path: attestation, heartbeat, and provision acknowledgment.</p>
+  <p>That last point matters for executives evaluating seriousness. A listing on a webpage is not inventory. <strong>Identity and liveness are different signals.</strong> Attestation answers “what hardware claims to be here.” Heartbeat answers “is it online now.” Neo Clouds separates those on purpose.</p>
+
+  <h2>What we are — and are not — claiming</h2>
+  <p>Early access requires discipline.</p>
+  <p>Neo Clouds is live as a marketplace surface at <a href="https://neocloudsmarketplace.com">neocloudsmarketplace.com</a>. Demo inventory remains clearly labeled as simulated. Live provider nodes are a distinct path. <strong>Payments are still disabled.</strong> We would rather be precise than overclaim a paid fleet we have not finished wiring.</p>
+  <p>That honesty is strategy, not apology. Markets form when participants trust the rules. Overstating readiness destroys the only asset that matters in an early marketplace: credibility.</p>
+
+  <h2>Who this is for</h2>
+  <p><strong>Providers</strong> with spare or intermittently idle GPUs/TPUs — neo-cloud operators, labs, enterprises with dark capacity, colo partners — who want another distribution channel without rebuilding a cloud.</p>
+  <p><strong>Builders</strong> who need flexible accelerator access: short training bursts, fine-tunes, inference experiments — without treating every request as a hyperscaler procurement event.</p>
+  <p>If you sit between those worlds — infrastructure leadership, AI platform ownership, capacity planning — you already feel the inefficiency. Owned assets depreciating on one side. Roadmaps slipping on the other.</p>
+
+  <h2>Why “open” is an executive decision</h2>
+  <p>Closed marketplaces can work. Many do. But AI infrastructure is consolidating fast, and buyers are wary of new lock-in wearing a friendlier UI.</p>
+  <p>An open catalog and open APIs are not idealism. They are a bet that <strong>secondary compute becomes infrastructure</strong>, and infrastructure gets composed: schedulers, agents, internal portals, and future “sky” planners will want programmable supply — not another silo.</p>
+  <p>Neo Clouds is designed as a control plane for that supply: discover, reserve, connect. Orchestration depth, settlement, and hardened multi-tenancy come next. The wedge is liquidity.</p>
+
+  <h2>The ask</h2>
+  <p>If you run unused accelerators, or you are accountable for getting AI teams unblocked without burning budget on wait time:</p>
+  <div class="cta">
+    <p>Explore the marketplace: <a href="https://neocloudsmarketplace.com">neocloudsmarketplace.com</a></p>
+    <p>Providers: start at the console / pilot path on the site</p>
+    <p class="contact">Contact: hellonecoloudsmarketplace@googlegroups.com</p>
+  </div>
+  <p style="margin-top:18px">The next phase of AI infrastructure will not only be about who manufactures chips. It will be about who makes existing chips <strong>reachable</strong>.</p>
+  <p>Unused capacity that never reaches the market is a silent tax on every AI roadmap.</p>
+  <p>We are building the exchange that turns that tax into supply.</p>
+
+  <div class="footer">
+    Neo Clouds · Executive LinkedIn article · Early access · Payments disabled<br>
+    Source: marketing/linkedin-executive-article.md
+  </div>
+</article>
+</body>
+</html>
