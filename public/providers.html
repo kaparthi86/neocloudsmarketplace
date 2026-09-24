@@ -64,7 +64,7 @@
     <ul>
       <li>Demo catalog rows stay <strong>simulated</strong>. Live nodes use the <a href="/console.html">provider console</a> + neo-agent.</li>
       <li>Joining the waitlist does <strong>not</strong> turn on payouts or payments.</li>
-      <li>API keys for providers exist for dry-run listing; expect the environment to reset while we are in pilot.</li>
+      <li>API keys are stored on the persistent disk. If you lose a key, use <strong>Email my key</strong> on the marketplace once email delivery is configured.</li>
     </ul>
   </div>
 
@@ -159,7 +159,7 @@ curl -s -X POST https://neocloudsmarketplace.com/v1/listings \
 
   <h2>4. What happens next</h2>
   <ul>
-    <li>We review waitlist inventory and follow up by email.</li>
+    <li>Waitlist rows land in the operator inbox at <a href="/admin">/admin</a>. When email delivery is configured, the operator is emailed too.</li>
     <li>Ready to connect hardware now? Use the <a href="/console.html">provider console</a> and <a href="/HARDWARE.md">HARDWARE.md</a> guide (neo-agent heartbeat + attest + provision).</li>
     <li>Payments and automatic SSH user creation are still disabled — agent acks with connection info you configure on the host.</li>
   </ul>

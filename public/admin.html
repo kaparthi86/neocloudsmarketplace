@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operator inbox — Neo Clouds</title>
+<link rel="stylesheet" href="/site.css">
+<style>
+  main { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+  h1 { font-family: var(--display); font-weight: 400; color: var(--gold); margin-bottom: 8px; }
+  h2 { margin: 28px 0 10px; font-size: 1.05rem; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+  input { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 12px; min-width: 260px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin: 8px 0; }
+  .alert { color: var(--gold); }
+  .muted { color: var(--muted); }
+  .err { color: var(--red); }
+</style>
+</head>
+<body>
+<nav class="site-nav">
+  <a class="logo" href="/">☁ Neo Clouds</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/marketplace">Marketplace</a>
+    <a href="/admin" class="active">Inbox</a>
+  </div>
+</nav>
+<main>
+  <h1>Operator inbox</h1>
+  <p class="muted">Contact notes, provider waitlist, live-node heartbeats, and reservations still open. Payments stay off.</p>
+  <div class="row">
+    <input id="admin-key" type="password" placeholder="ADMIN_API_KEY" autocomplete="off">
+    <button class="btn btn-gold" onclick="loadInbox()">Open inbox</button>
+  </div>
+  <p id="status" class="muted"></p>
+  <div id="out"></div>
+</main>
+<script>
+const KEY = 'neo_admin_key';
+const input = document.getElementById('admin-key');
+input.value = sessionStorage.getItem(KEY) || '';
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+async function loadInbox() {
+  const key = input.value.trim();
+  const status = document.getElementById('status');
+  const out = document.getElementById('out');
+  if (!key) { status.textContent = 'Paste the operator key.'; return; }
+  sessionStorage.setItem(KEY, key);
+  status.textContent = 'Loading…';
+  out.innerHTML = '';
+  try {
+    const res = await fetch('/v1/admin/overview', { headers: { Authorization: `Bearer ${key}` } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Request failed');
+    status.textContent = data.mailConfigured
+      ? 'Email delivery is on. New notes are also emailed to the operator.'
+      : 'Email delivery is off. This page is the inbox.';
+    const alerts = (data.alerts || []).map(a => `<li class="alert">${esc(a)}</li>`).join('');
+    const contacts = (data.contacts || []).map(c =>
+      `<div class="card"><strong>${esc(c.name)}</strong> · ${esc(c.email)} · ${esc(c.intent)}<br><span class="muted">${esc(c.created_at)} · emailed ${c.emailed ? 'yes' : 'no'}</span><p>${esc(c.message)}</p></div>`
+    ).join('') || '<p class="muted">No contact messages.</p>';
+    const wait = (data.waitlist || []).map(p =>
+      `<div class="card"><strong>${esc(p.name)}</strong> · ${esc(p.email)} ${esc(p.company || '')}<br>${esc(p.accelerator_count || '?')}× ${esc(p.accelerator_model || '')} · ${esc(p.region || '')} · $${esc(p.price_per_hour || '—')}/hr<br><span class="muted">${esc(cWork(p))} · ${esc(p.created_at)}</span><p>${esc(p.notes || '')}</p></div>`
+    ).join('') || '<p class="muted">No waitlist rows.</p>';
+    const nodes = (data.nodes || []).map(n =>
+      `<tr><td>${esc(n.node_id)}</td><td>${esc(n.accelerator_model)}</td><td>${n.live ? 'live' : 'demo'}</td><td>${n.online ? 'online' : 'offline'}</td><td>${esc(n.attestation_status)}</td><td>${esc(n.last_heartbeat_at || '—')}</td></tr>`
+    ).join('') || '<tr><td colspan="6" class="muted">No nodes.</td></tr>';
+    const reservations = (data.reservations || []).map(r =>
+      `<tr><td>${esc(r.reservation_id)}</td><td>${esc(r.status)}</td><td>${r.simulated ? 'demo' : 'live'}</td><td>${esc(r.ends_at)}</td><td>${r.provision_late ? 'late' : ''}</td></tr>`
+    ).join('') || '<tr><td colspan="5" class="muted">No open reservations.</td></tr>';
+    out.innerHTML = `
+      <ul>${alerts}</ul>
+      <p class="muted">${data.accounts} accounts · ${data.listings} listings · db ${esc(data.persistencePath)}</p>
+      <h2>Contact</h2>${contacts}
+      <h2>Provider waitlist</h2>${wait}
+      <h2>Nodes</h2>
+      <table><thead><tr><th>Node</th><th>Model</th><th>Mode</th><th>Agent</th><th>Attest</th><th>Last heartbeat</th></tr></thead><tbody>${nodes}</tbody></table>
+      <h2>Open reservations</h2>
+      <table><thead><tr><th>Reservation</th><th>Status</th><th>Kind</th><th>Ends</th><th></th></tr></thead><tbody>${reservations}</tbody></table>
+    `;
+  } catch (e) {
+    status.className = 'err';
+    status.textContent = e.message;
+  }
+}
+
+function cWork(p) {
+  return Array.isArray(p.workloads) ? p.workloads.join(', ') : '';
+}
+
+if (input.value) loadInbox();
+</script>
+</body>
+</html>

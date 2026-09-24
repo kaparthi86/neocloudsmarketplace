@@ -5,6 +5,7 @@
 import { store, makeId, parsePrice, formatPrice } from './store.js';
 import { schedulePersist } from './db.js';
 import { isLiveNode, isNodeOnline } from './agent.js';
+import { expireReservations } from './lifecycle.js';
 
 function validateListing(body) {
   const { node_id, price_per_hour } = body;
@@ -69,6 +70,7 @@ export function createListing(providerId, body) {
 }
 
 export function listListings(filters = {}) {
+  expireReservations();
   let results = [...store.listings.values()];
 
   if (filters.accelerator_type) {
@@ -132,6 +134,7 @@ export function listListings(filters = {}) {
 }
 
 export function getListing(listingId) {
+  expireReservations();
   const listing = store.listings.get(listingId);
   if (!listing) { const e = new Error('listing not found'); e.status = 404; throw e; }
   listing.view_count++;

@@ -4,6 +4,7 @@
 
 import { store, makeId } from './store.js';
 import { schedulePersist } from './db.js';
+import { inboundSavedMessage, notifyOperator } from './mail.js';
 
 const VALID_INTENTS = ['provider', 'customer', 'other'];
 
@@ -16,7 +17,7 @@ function requireString(value, field, { max = 200 } = {}) {
   return trimmed;
 }
 
-export function submitContact(body = {}) {
+export async function submitContact(body = {}) {
   const name = requireString(body.name, 'name', { max: 120 });
   const email = requireString(body.email, 'email', { max: 200 }).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('email looks invalid');
@@ -32,11 +33,17 @@ export function submitContact(body = {}) {
     message,
     created_at: new Date().toISOString(),
   };
+  const mailed = await notifyOperator({
+    subject: `Neo Clouds contact ${entry.contact_id}`,
+    text: `${entry.name} <${entry.email}> (${entry.intent})\n\n${entry.message}`,
+  });
+  entry.emailed = mailed.sent === true;
   store.contactMessages.push(entry);
   schedulePersist();
   return {
     contact_id: entry.contact_id,
-    message: 'Thanks — we received your note and will follow up by email.',
+    emailed: entry.emailed,
+    message: inboundSavedMessage(entry.emailed),
     created_at: entry.created_at,
   };
 }

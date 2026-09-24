@@ -7,10 +7,15 @@ services:
     name: neo-clouds-marketplace
     runtime: node
     region: oregon
-    plan: free
+    # starter stays awake. Free sleeps and cannot mount a disk, which drops keys and the inbox.
+    plan: starter
     buildCommand: echo "Neo Clouds — no build step"
     startCommand: npm start
     healthCheckPath: /api/health
+    disk:
+      name: neo-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,8 +24,18 @@ services:
       - key: SEED_DEMO
         value: "1"
       - key: NEO_DB_PATH
-        value: data/neo-clouds.sqlite
+        value: /var/data/neo-clouds.sqlite
       - key: BETA_TESTING
         value: "0"
       - key: BETA_MESSAGE
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: NEO_MAIL_FROM
+        sync: false
+      - key: NEO_OPERATOR_EMAIL
+        sync: false
+      - key: NEO_MAIL_WEBHOOK_URL
         sync: false

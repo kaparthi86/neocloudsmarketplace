@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { Router } from './router.js';
-import { authenticate, requireAuth, requireRole, registerAccount } from './auth.js';
+import { authenticate, requireAuth, requireRole, registerAccount, rotateApiKey, verifyEmailToken, findAccountByEmail } from './auth.js';
 import { registerNode, listNodes, attestNode, deregisterNode, beginAttest } from './providers.js';
 import { createListing, listListings, getListing, updateListing, deleteListing } from './listings.js';
 import { createReservation, listReservations, getReservation, cancelReservation, completeReservation } from './reservations.js';
@@ -26,6 +26,12 @@ import {
   HEARTBEAT_TTL_MS,
 } from './agent.js';
 import { isPersistenceEnabled } from './db.js';
+import { enforceRateLimit } from './ratelimit.js';
+import { isMailConfigured, sendAccountKeyEmail } from './mail.js';
+import { adminOverview } from './admin.js';
+import { expireReservations } from './lifecycle.js';
+
+const MAX_BODY_BYTES = 64 * 1024;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -48,6 +54,9 @@ function handleError(res, e) {
   if (e.code === 'forbidden'    || e.status === 403) return err(res, 403, 'forbidden',    e.message || 'forbidden');
   if (e.status === 404) return err(res, 404, 'not_found', e.message);
   if (e.status === 409) return err(res, 409, 'conflict',  e.message);
+  if (e.status === 413) return err(res, 413, 'payload_too_large', e.message);
+  if (e.status === 429) return err(res, 429, 'rate_limited', e.message);
+  if (e.status === 503) return err(res, 503, 'unavailable', e.message);
   return err(res, 400, 'bad_request', e.message);
 }
 
@@ -56,14 +65,46 @@ function handleError(res, e) {
 // ---------------------------------------------------------------------------
 function readBody(req) {
   return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => { data += chunk; });
+    let size = 0;
+    const chunks = [];
+    let failed = false;
+    req.on('data', chunk => {
+      if (failed) return;
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        failed = true;
+        const e = new Error('Request body is limited to 64KB');
+        e.status = 413;
+        reject(e);
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
+      if (failed) return;
+      const data = Buffer.concat(chunks).toString('utf8');
       try { resolve(data ? JSON.parse(data) : {}); }
       catch { reject(new Error('Invalid JSON')); }
     });
-    req.on('error', reject);
+    req.on('error', (err) => { if (!failed) reject(err); });
   });
+}
+
+function requireAdmin(req) {
+  const expected = process.env.ADMIN_API_KEY;
+  if (!expected) {
+    const e = new Error('Operator inbox is not configured. Set ADMIN_API_KEY.');
+    e.status = 503;
+    throw e;
+  }
+  const auth = req.headers['authorization'] || '';
+  const match = auth.match(/^Bearer (.+)$/);
+  if (!match || match[1] !== expected) {
+    const e = new Error('Operator key required');
+    e.status = 401;
+    e.code = 'unauthorized';
+    throw e;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -88,9 +129,59 @@ export function buildRouter() {
   // Auth
   router.post('/v1/auth/register', async (req, res) => {
     try {
+      enforceRateLimit(req, '/v1/auth/register');
       const body = await readBody(req);
       const account = registerAccount(body);
-      created(res, account);
+      const mail = await sendAccountKeyEmail(account, 'new account');
+      const { verify_token, ...safe } = account;
+      created(res, { ...safe, key_emailed: mail.sent === true });
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.post('/v1/auth/recover', async (req, res) => {
+    try {
+      enforceRateLimit(req, '/v1/auth/recover');
+      const body = await readBody(req);
+      const account = findAccountByEmail(body.email);
+      let emailed = false;
+      if (account && isMailConfigured()) {
+        if (!account.verify_token) account.verify_token = null;
+        const mail = await sendAccountKeyEmail(account, 'key recovery');
+        emailed = mail.sent === true;
+      }
+      ok(res, {
+        emailed,
+        mailConfigured: isMailConfigured(),
+        message: isMailConfigured()
+          ? 'If that email is registered, we sent the API key.'
+          : 'Email delivery is not configured. Use the key you saved, or ask the operator to read the account from the host.',
+      });
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.post('/v1/auth/rotate', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireAuth(account);
+      const rotated = rotateApiKey(account);
+      const mail = await sendAccountKeyEmail(rotated, 'rotated key');
+      const { verify_token, ...safe } = rotated;
+      ok(res, { ...safe, key_emailed: mail.sent === true });
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.get('/v1/auth/verify', async (req, res) => {
+    try {
+      const url = new URL(req.url, 'http://x');
+      ok(res, verifyEmailToken(url.searchParams.get('token')));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.get('/v1/admin/overview', async (req, res) => {
+    try {
+      requireAdmin(req);
+      expireReservations();
+      ok(res, adminOverview());
     } catch (e) { handleError(res, e); }
   });
 
@@ -98,7 +189,8 @@ export function buildRouter() {
     try {
       const account = authenticate(req);
       requireAuth(account);
-      ok(res, account);
+      const { verify_token, ...safe } = account;
+      ok(res, safe);
     } catch (e) { handleError(res, e); }
   });
 
@@ -255,6 +347,7 @@ export function buildRouter() {
   // Inference
   router.post('/v1/chat/completions', async (req, res) => {
     try {
+      enforceRateLimit(req, '/v1/chat/completions');
       const account = authenticate(req);
       requireAuth(account);
       const body = await readBody(req);
@@ -308,8 +401,9 @@ export function buildRouter() {
   // Provider pilot waitlist (public — interest + inventory only)
   router.post('/v1/provider-pilot', async (req, res) => {
     try {
+      enforceRateLimit(req, '/v1/provider-pilot');
       const body = await readBody(req);
-      created(res, submitProviderPilot(body));
+      created(res, await submitProviderPilot(body));
     } catch (e) { handleError(res, e); }
   });
 
@@ -321,8 +415,9 @@ export function buildRouter() {
 
   router.post('/v1/contact', async (req, res) => {
     try {
+      enforceRateLimit(req, '/v1/contact');
       const body = await readBody(req);
-      created(res, submitContact(body));
+      created(res, await submitContact(body));
     } catch (e) { handleError(res, e); }
   });
 
@@ -378,8 +473,18 @@ export function createMarketplaceServer() {
   const router = buildRouter();
 
   const server = createServer(async (req, res) => {
+    const started = Date.now();
     const url = new URL(req.url, 'http://x');
     const pathname = url.pathname;
+    res.on('finish', () => {
+      console.log(JSON.stringify({
+        msg: 'request',
+        method: req.method,
+        path: pathname,
+        status: res.statusCode,
+        ms: Date.now() - started,
+      }));
+    });
 
     // Health (Render + uptime monitors)
     if (pathname === '/health' || pathname === '/api/health') {
@@ -393,6 +498,9 @@ export function createMarketplaceServer() {
         paymentsEnabled: false,
         canonicalDomain: process.env.CANONICAL_DOMAIN || 'neocloudsmarketplace.com',
         persistenceEnabled: isPersistenceEnabled(),
+        mailConfigured: isMailConfigured(),
+        adminInbox: Boolean(process.env.ADMIN_API_KEY),
+        reservationExpiry: true,
         agentHeartbeatTtlMs: HEARTBEAT_TTL_MS,
         liveHardwareConnect: true,
         ...demoSeedConfig(),
@@ -439,6 +547,9 @@ export function createMarketplaceServer() {
     }
     if (pathname === '/providers.html' || pathname === '/provider-pilot.html') {
       return serveStatic(res, join(PUBLIC_DIR, 'providers.html'), 'text/html; charset=utf-8');
+    }
+    if (pathname === '/admin.html' || pathname === '/admin') {
+      return serveStatic(res, join(PUBLIC_DIR, 'admin.html'), 'text/html; charset=utf-8');
     }
     if (pathname === '/site.css') {
       return serveStatic(res, join(PUBLIC_DIR, 'site.css'), 'text/css; charset=utf-8');
