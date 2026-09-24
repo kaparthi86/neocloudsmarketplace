@@ -152,6 +152,7 @@
 <nav class="site-nav" style="position:relative;top:0;height:auto;min-height:44px;padding:8px 24px;background:var(--surface)">
   <div class="app-subnav" id="app-subnav">
     <a href="#listings" class="active">Listings</a>
+    <a href="#reservations">My reservations</a>
     <a href="#models">Models</a>
     <a href="#providers">Leaderboard</a>
     <a href="#stats">Stats</a>
@@ -179,6 +180,8 @@
       <button class="btn btn-outline btn-sm" id="use-sample-key-btn" style="display:none" onclick="useSampleCustomerKey()">Use sample key</button>
       <button class="btn btn-outline btn-sm" onclick="saveKey()">Save Key</button>
       <button class="btn btn-gold btn-sm" onclick="openRegister()">Get API Key</button>
+      <button class="btn btn-outline btn-sm" onclick="openRecover()">Email my key</button>
+      <button class="btn btn-outline btn-sm" onclick="rotateKey()">Rotate key</button>
     </div>
     <div class="catalog-bar" id="catalog-bar">
       <div class="catalog-row">
@@ -206,6 +209,14 @@
     </div>
     <div class="card-grid" id="listings-grid"></div>
     <p id="listings-empty" style="color:var(--muted);display:none">No listings found.</p>
+  </main>
+</div>
+
+<div id="page-reservations" class="page">
+  <main>
+    <h2 style="margin-bottom:8px">My reservations</h2>
+    <p class="notice">Live reserves stay here until the provider agent sends connection details. Holds end when the window closes, or sooner if the agent never acks. Nothing is charged.</p>
+    <div id="reservations-list"></div>
   </main>
 </div>
 
@@ -333,7 +344,8 @@ validateStoredKey();
 // ---------------------------------------------------------------------------
 // Routing
 // ---------------------------------------------------------------------------
-const pages = { listings: 'page-listings', models: 'page-models', providers: 'page-providers', stats: 'page-stats' };
+const pages = { listings: 'page-listings', reservations: 'page-reservations', models: 'page-models', providers: 'page-providers', stats: 'page-stats' };
+let reservationPoll = null;
 
 function navigate(hash) {
   const page = hash.replace('#', '') || 'listings';
@@ -344,6 +356,7 @@ function navigate(hash) {
     a.classList.toggle('active', a.getAttribute('href') === `#${page}`);
   });
   if (page === 'listings') { loadStats(); loadListings(); }
+  else if (page === 'reservations') loadReservations();
   else if (page === 'models') loadModels();
   else if (page === 'providers') loadProviders();
   else if (page === 'stats') loadStatsPage();
@@ -659,6 +672,7 @@ async function submitReservation() {
       toast(`Simulated reservation saved (${r.reservation_id}). You were not charged.`);
     }
     loadListings();
+    loadReservations();
   } catch (e) {
     if (e.status === 401) {
       clearApiKey();
@@ -672,6 +686,79 @@ async function submitReservation() {
       promptForCustomerKey('API key missing or invalid. Get a free customer key to reserve (demo, no charge).');
       return;
     }
+    toast(e.message, true);
+  }
+}
+
+async function loadReservations() {
+  const box = document.getElementById('reservations-list');
+  if (!box) return;
+  if (!API_KEY) {
+    box.innerHTML = '<p style="color:var(--muted)">Save a customer key to see reservations.</p>';
+    return;
+  }
+  try {
+    const rows = await api('GET', '/reservations');
+    if (!Array.isArray(rows) || rows.length === 0) {
+      box.innerHTML = '<p style="color:var(--muted)">No reservations yet.</p>';
+      stopReservationPoll();
+      return;
+    }
+    const pending = rows.some(r => r.status === 'pending_provision');
+    if (pending) startReservationPoll();
+    else stopReservationPoll();
+    box.innerHTML = `<table><thead><tr><th>Reservation</th><th>Status</th><th>Ends</th><th>Access</th></tr></thead><tbody>${
+      rows.map(r => {
+        const info = r.connection_info || {};
+        let access = esc(info.note || '');
+        if (r.status === 'active' && r.simulated === false && info.ssh_host) {
+          access = `${esc(info.ssh_user || 'neo')}@${esc(info.ssh_host)}:${esc(info.ssh_port || 22)} token ${esc(info.access_token || '')}`;
+        }
+        return `<tr><td>${esc(r.reservation_id)}</td><td>${esc(r.status)}${r.simulated ? ' · demo' : ' · live'}</td><td>${esc(r.ends_at || '')}</td><td>${access}</td></tr>`;
+      }).join('')
+    }</tbody></table>`;
+  } catch (e) {
+    box.innerHTML = `<p style="color:var(--red)">${esc(e.message)}</p>`;
+  }
+}
+
+function startReservationPoll() {
+  if (reservationPoll) return;
+  reservationPoll = setInterval(() => {
+    if (location.hash === '#reservations' || document.getElementById('page-reservations').classList.contains('active')) {
+      loadReservations();
+    }
+  }, 5000);
+}
+
+function stopReservationPoll() {
+  if (!reservationPoll) return;
+  clearInterval(reservationPoll);
+  reservationPoll = null;
+}
+
+function openRecover() {
+  const email = prompt('Email on the account. If mail is configured, we send the key there.');
+  if (!email) return;
+  fetch('/v1/auth/recover', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  }).then(r => r.json()).then(data => {
+    toast(data.message || 'Request saved', !data.mailConfigured && !data.emailed);
+  }).catch(e => toast(e.message, true));
+}
+
+async function rotateKey() {
+  if (!API_KEY) { toast('Save a key before rotating it.', true); return; }
+  if (!confirm('Rotate this key? The current key stops working immediately.')) return;
+  try {
+    const me = await api('POST', '/auth/rotate', {});
+    API_KEY = me.api_key;
+    localStorage.setItem('neo_api_key', API_KEY);
+    document.getElementById('api-key-input').value = API_KEY;
+    toast(me.key_emailed ? 'New key saved and emailed.' : 'New key saved. Copy it — email delivery is off.');
+  } catch (e) {
     toast(e.message, true);
   }
 }

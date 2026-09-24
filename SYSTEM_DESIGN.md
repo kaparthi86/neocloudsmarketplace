@@ -322,7 +322,7 @@ flowchart LR
 - **Source of truth at runtime:** in-process `store`  
 - **Durability:** SQLite file via `NEO_DB_PATH` (default `data/neo-clouds.sqlite`)  
 - **Tests:** `:memory:` or persistence off  
-- **Deploy caveat:** Render free disk is ephemeral—attach a persistent disk for `data/` in production  
+- **Deploy:** Render starter plan with a disk at `/var/data` (`NEO_DB_PATH`). The free plan sleeps and has no disk, so it cannot keep keys or heartbeats.  
 
 No separate Postgres/queue yet; acceptable for early access single-node control plane.
 
@@ -333,9 +333,9 @@ No separate Postgres/queue yet; acceptable for early access single-node control 
 | Risk | Current mitigation | Future hardening |
 |---|---|---|
 | Stale “available” listings | Heartbeat TTL | Provider SLA metrics / reputation |
-| Fake hardware checkbox | Challenge + fingerprint proof; stub attest blocked when `live` | Device attestation (NVIDIA / TPU topology) |
+| Fake hardware checkbox | Challenge proof is required; heartbeat cannot promote a demo node to live | Device attestation (NVIDIA / TPU topology) |
 | Malicious customer code on seller host | Out of band (provider configures SSH) | Mediated containers / VMs / TEEs |
-| Key leakage | Bearer API keys | Scoped keys, rotation, OAuth |
+| Key leakage | Bearer API keys, rotate + email recovery | Scoped keys, OAuth |
 | Inventory spoofing across providers | `provider_id` ownership checks | Stronger identity + payout KYC when payments land |
 
 **Payments:** explicitly disabled. Listed prices are discovery signals only.

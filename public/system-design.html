@@ -452,9 +452,9 @@ flowchart LR
     <thead><tr><th>Risk</th><th>Current mitigation</th><th>Future</th></tr></thead>
     <tbody>
       <tr><td>Stale availability</td><td>Heartbeat TTL</td><td>SLA / reputation</td></tr>
-      <tr><td>Fake hardware</td><td>Challenge + fingerprint; stub blocked on live</td><td>Device attestation</td></tr>
+      <tr><td>Fake hardware</td><td>Proof required; heartbeat cannot mark a demo node live</td><td>Device attestation</td></tr>
       <tr><td>Malicious workloads</td><td>Provider-managed SSH</td><td>Containers / VMs / TEEs</td></tr>
-      <tr><td>Key leakage</td><td>Bearer API keys</td><td>Scoped keys, rotation</td></tr>
+      <tr><td>Key leakage</td><td>Bearer API keys, rotate, email recovery</td><td>Scoped keys, OAuth</td></tr>
     </tbody>
   </table>
   <p><strong>Payments:</strong> disabled. Listed prices are discovery signals only.</p>

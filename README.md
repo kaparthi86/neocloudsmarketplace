@@ -37,8 +37,11 @@ npm start
 - Public browse; API keys for reserve and inference
 - Provider pilot waitlist: [/providers.html](./public/providers.html) · [PROVIDER-PILOT.md](./PROVIDER-PILOT.md)
 - Provider console: [/console.html](./public/console.html)
-- SQLite persistence (`NEO_DB_PATH`)
-- Privacy, Terms, health check, beta banner
+- SQLite on a persistent disk (`NEO_DB_PATH`)
+- Operator inbox at `/admin` (contact, waitlist, node heartbeats)
+- API key recovery and rotation
+- Reservation expiry (window end and provision timeout)
+- Privacy, Terms, health check, request log, beta banner
 
 ## API
 
@@ -46,6 +49,9 @@ npm start
 |---|---|---|
 | `GET` | `/api/health` | No |
 | `POST` | `/v1/auth/register` | No |
+| `POST` | `/v1/auth/recover` | No |
+| `POST` | `/v1/auth/rotate` | Any key |
+| `GET` | `/v1/admin/overview` | Operator key |
 | `GET` | `/v1/listings` | No |
 | `GET` | `/v1/models` | No |
 | `POST` | `/v1/reservations` | Customer key |

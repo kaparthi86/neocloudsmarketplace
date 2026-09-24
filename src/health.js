@@ -41,6 +41,11 @@ export function healthPayload() {
     onlineLiveNodes: onlineLive.length,
     indexHtmlDeployed,
     seedDemoEnabled: process.env.SEED_DEMO === '1',
+    mailConfigured: Boolean(
+      process.env.NEO_MAIL_WEBHOOK_URL || (process.env.RESEND_API_KEY && process.env.NEO_MAIL_FROM),
+    ),
+    adminInbox: Boolean(process.env.ADMIN_API_KEY),
+    reservationExpiry: true,
     accounts: store.accounts.size,
     listings: store.listings.size,
     models: store.models.size,

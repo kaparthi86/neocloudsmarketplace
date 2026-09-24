@@ -32,9 +32,20 @@ export function agentHeartbeat(providerId, body = {}) {
   if (!nodeId) throw new Error('node_id is required');
   const node = requireNode(providerId, nodeId);
 
+  if (!isLiveNode(node)) {
+    const e = new Error('Heartbeat is only accepted for nodes registered with live:true');
+    e.status = 409;
+    throw e;
+  }
+  if (node.hardware_fingerprint && body.hardware_fingerprint
+    && String(body.hardware_fingerprint) !== node.hardware_fingerprint) {
+    const e = new Error('hardware_fingerprint does not match attestation');
+    e.status = 409;
+    throw e;
+  }
+
   node.last_heartbeat_at = new Date().toISOString();
   node.online = true;
-  node.live = true;
   if (body.agent_version) node.agent_version = String(body.agent_version).slice(0, 64);
   if (body.hostname) node.hostname = String(body.hostname).slice(0, 200);
   if (body.hardware_fingerprint) {
@@ -101,8 +112,9 @@ export function verifyAttestChallenge(providerId, body = {}) {
   }
   if (challenge.nonce !== nonce) throw new Error('nonce mismatch');
 
+  if (!proof) throw new Error('proof is required');
   const expected = fingerprintPayload(nonce, hardware_fingerprint);
-  if (proof && proof !== expected) throw new Error('invalid attestation proof');
+  if (proof !== expected) throw new Error('invalid attestation proof');
 
   const node = requireNode(providerId, challenge.node_id);
   node.attestation_status = 'attested';

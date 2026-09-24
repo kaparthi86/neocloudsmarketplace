@@ -7,8 +7,10 @@ import { store, makeId, parsePrice, formatPrice } from './store.js';
 import { isListingAvailable } from './listings.js';
 import { isLiveNode, isNodeOnline } from './agent.js';
 import { schedulePersist } from './db.js';
+import { expireReservations } from './lifecycle.js';
 
 export function createReservation(customerId, body) {
+  expireReservations();
   const { listing_id, hours, starts_at } = body;
   if (!listing_id) throw new Error('listing_id is required');
   if (!Number.isInteger(hours) || hours < 1) throw new Error('hours must be positive integer');
@@ -67,6 +69,7 @@ export function createReservation(customerId, body) {
 }
 
 export function listReservations(account) {
+  expireReservations();
   return [...store.reservations.values()].filter(r => {
     if (account.role === 'customer') return r.customer_id === account.account_id;
     if (account.role === 'provider') return r.provider_id === account.account_id;
@@ -75,6 +78,7 @@ export function listReservations(account) {
 }
 
 export function getReservation(account, reservationId) {
+  expireReservations();
   const r = store.reservations.get(reservationId);
   if (!r) { const e = new Error('reservation not found'); e.status = 404; throw e; }
   if (account.role === 'customer' && r.customer_id !== account.account_id) {

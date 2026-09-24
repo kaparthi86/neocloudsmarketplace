@@ -72,6 +72,7 @@ Open http://localhost:8788 — listings, **Get API Key**, reserve, `#models` cha
 3. Blueprint file: **`render.yaml`** at repo root
 4. Service name: **`neo-clouds-marketplace`**
 5. Root Directory: **leave blank** (repo root)
+6. Blueprint plan is **starter** with a disk at `/var/data` (do not switch this service to free)
 
 Environment (defaults in `render.yaml`):
 
@@ -81,6 +82,10 @@ Environment (defaults in `render.yaml`):
 | `CANONICAL_DOMAIN` | `neocloudsmarketplace.com` |
 | `SEED_DEMO` | `1` |
 | `BETA_TESTING` | `0` |
+| `NEO_DB_PATH` | `/var/data/neo-clouds.sqlite` |
+| `ADMIN_API_KEY` | set in the dashboard (operator inbox) |
+| `NEO_OPERATOR_EMAIL` | inbox that should receive contact and waitlist mail |
+| `RESEND_API_KEY` + `NEO_MAIL_FROM` | or `NEO_MAIL_WEBHOOK_URL` instead |
 
 The homepage always shows that reserve/inference are simulated and that nothing is charged. Optional `BETA_MESSAGE` overrides that wording. Do not add Stripe or checkout until real hardware is live.
 
@@ -140,8 +145,10 @@ Provider flow: share **[/providers.html](./public/providers.html)** (waitlist + 
 
 | Item | Action |
 |---|---|
-| Hosting | Upgrade Render (free tier cold-starts) |
-| Persistence | Postgres/Redis before high traffic |
+| Hosting | Blueprint uses Render **starter** so the process stays awake for 90s heartbeats |
+| Persistence | SQLite on the blueprint disk at `/var/data`. Postgres before multi-instance traffic |
+| Operator inbox | Set `ADMIN_API_KEY`, open `/admin` |
+| Email | Set `RESEND_API_KEY` + `NEO_MAIL_FROM`, or `NEO_MAIL_WEBHOOK_URL`, and `NEO_OPERATOR_EMAIL` |
 | Billing | Easy Billing Meter API (optional) |
 | Real GPUs | SSH + vLLM on provider nodes |
 

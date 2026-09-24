@@ -5,6 +5,7 @@
 
 import { store, makeId } from './store.js';
 import { schedulePersist } from './db.js';
+import { inboundSavedMessage, notifyOperator } from './mail.js';
 
 const VALID_ACCELERATORS = ['gpu', 'tpu'];
 const VALID_WORKLOADS = ['training', 'inference', 'fine-tune', 'other'];
@@ -52,7 +53,7 @@ function normalizeWorkload(raw) {
  * Submit provider pilot interest + optional hardware inventory.
  * Public endpoint — no auth required for waitlist.
  */
-export function submitProviderPilot(body = {}) {
+export async function submitProviderPilot(body = {}) {
   const name = requireString(body.name, 'name', { max: 120 });
   const email = requireString(body.email, 'email', { max: 200 }).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('email looks invalid');
@@ -112,13 +113,23 @@ export function submitProviderPilot(body = {}) {
     created_at: new Date().toISOString(),
   };
 
+  const mailed = await notifyOperator({
+    subject: `Neo Clouds provider waitlist ${entry.interest_id}`,
+    text: [
+      `${entry.name} <${entry.email}> ${entry.company || ''}`.trim(),
+      `Hardware: ${entry.accelerator_count || '?'}× ${entry.accelerator_model || 'unspecified'} ${entry.region || ''}`,
+      `Rate: ${entry.price_per_hour || 'n/a'}  workloads: ${(entry.workloads || []).join(', ')}`,
+      entry.notes || '',
+    ].join('\n'),
+  });
+  entry.emailed = mailed.sent === true;
   store.providerPilot.push(entry);
   schedulePersist();
   return {
     interest_id: entry.interest_id,
     status: entry.status,
-    message:
-      'Thanks — you are on the provider pilot waitlist. We will follow up by email. This does not provision live hardware or enable payouts yet.',
+    emailed: entry.emailed,
+    message: `You are on the provider pilot waitlist. ${inboundSavedMessage(entry.emailed)}`,
     created_at: entry.created_at,
   };
 }

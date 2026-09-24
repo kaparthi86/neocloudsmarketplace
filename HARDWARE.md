@@ -66,12 +66,14 @@ curl -s -X POST "$API/v1/agent/heartbeat" -H "Authorization: Bearer $NKP" -H 'Co
 | `ALLOW_STUB_ATTEST=1` | Allow flag-flip attest on live nodes (dev only) |
 | `SEED_DEMO=1` | Demo listings + sample customer key |
 
-**Deploy note:** On Render free, the filesystem is ephemeral — set a persistent disk for `data/` in production so SQLite survives restarts.
+**Deploy note:** `render.yaml` uses the Render starter plan and a 1GB disk mounted at `/var/data`. SQLite lives at `NEO_DB_PATH=/var/data/neo-clouds.sqlite`. The free plan sleeps and cannot keep that disk, so live heartbeats and saved keys would not survive.
 
 ## Not included yet (next)
 
 - Real SSH user provisioning / containers / vLLM wiring  
 - Payments / payouts  
-- Postgres (SQLite is the persistence layer for now)  
+- Postgres (SQLite on a persistent disk is the persistence layer for now)  
+
+Attestation **requires** the agent proof. Heartbeats are accepted only for nodes registered with `live: true`. Reservations expire on their own: active holds complete at `ends_at`, and `pending_provision` cancels if the agent does not ack within `RESERVATION_PROVISION_TIMEOUT_MS` (default 15 minutes).
 
 Payments remain **disabled**. Inference canned responses remain for demo models until a live inference runtime is attached.

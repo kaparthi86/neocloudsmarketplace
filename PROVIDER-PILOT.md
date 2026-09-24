@@ -9,7 +9,8 @@ Use this when talking to GPU/TPU operators for the early-access pilot.
 - Marketplace listings, reservations, and inference are **simulated** today.
 - Joining the waitlist collects **interest + inventory only**.
 - **No live jobs, no payouts, no payment collection** yet.
-- Pilot API keys are for dry-run listing; the environment may reset.
+- Pilot API keys are stored on the persistent disk. Lost keys can be emailed back when mail is configured.
+- Waitlist and contact rows are in the operator inbox at `/admin`. Email to the operator is sent only when `RESEND_API_KEY` or `NEO_MAIL_WEBHOOK_URL` is set.
 
 ## What to ask them for
 
@@ -43,4 +44,4 @@ curl -s -X POST https://neocloudsmarketplace.com/v1/auth/register \
 
 1. Confirm we received their `interest_id`.
 2. Do **not** promise live provisioning or payouts.
-3. When persistence + real node connect ship, invite them into the live cohort.
+3. Read the row in `/admin` (and in operator email when mail is configured). Invite them onto the live console when they are ready to run neo-agent.
