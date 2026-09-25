@@ -66,10 +66,7 @@ async function loadInbox() {
     const contacts = (data.contacts || []).map(c =>
       `<div class="card"><strong>${esc(c.name)}</strong> · ${esc(c.email)} · ${esc(c.intent)}<br><span class="muted">${esc(c.created_at)} · emailed ${c.emailed ? 'yes' : 'no'}</span><p>${esc(c.message)}</p></div>`
     ).join('') || '<p class="muted">No contact messages.</p>';
-    const wait = (data.waitlist || []).map(p =>
-      `<div class="card"><strong>${esc(p.name)}</strong> · ${esc(p.email)} ${esc(p.company || '')}<br>${esc(p.accelerator_count || '?')}× ${esc(p.accelerator_model || '')} · ${esc(p.region || '')} · $${esc(p.price_per_hour || '—')}/hr<br><span class="muted">${esc(cWork(p))} · ${esc(p.created_at)}</span><p>${esc(p.notes || '')}</p></div>`
-    ).join('') || '<p class="muted">No waitlist rows.</p>';
-    const nodes = (data.nodes || []).map(n =>
+    const nodes = (data.nodes || []).map(n => {
       `<tr><td>${esc(n.node_id)}</td><td>${esc(n.accelerator_model)}</td><td>${n.live ? 'live' : 'demo'}</td><td>${n.online ? 'online' : 'offline'}</td><td>${esc(n.attestation_status)}</td><td>${esc(n.last_heartbeat_at || '—')}</td></tr>`
     ).join('') || '<tr><td colspan="6" class="muted">No nodes.</td></tr>';
     const reservations = (data.reservations || []).map(r =>
@@ -79,7 +76,6 @@ async function loadInbox() {
       <ul>${alerts}</ul>
       <p class="muted">${data.accounts} accounts · ${data.listings} listings · db ${esc(data.persistencePath)}</p>
       <h2>Contact</h2>${contacts}
-      <h2>Provider waitlist</h2>${wait}
       <h2>Nodes</h2>
       <table><thead><tr><th>Node</th><th>Model</th><th>Mode</th><th>Agent</th><th>Attest</th><th>Last heartbeat</th></tr></thead><tbody>${nodes}</tbody></table>
       <h2>Open reservations</h2>
@@ -89,10 +85,6 @@ async function loadInbox() {
     status.className = 'err';
     status.textContent = e.message;
   }
-}
-
-function cWork(p) {
-  return Array.isArray(p.workloads) ? p.workloads.join(', ') : '';
 }
 
 if (input.value) loadInbox();

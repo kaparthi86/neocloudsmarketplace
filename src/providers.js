@@ -4,7 +4,7 @@
 
 import { store, makeId } from './store.js';
 import { schedulePersist } from './db.js';
-import { createAttestChallenge, isLiveNode } from './agent.js';
+import { createAttestChallenge } from './agent.js';
 
 const VALID_INTERCONNECTS = ['NVLink', 'InfiniBand', 'PCIe', 'ICI', 'Ethernet', 'none'];
 const VALID_ACCELERATORS = ['gpu', 'tpu'];
@@ -68,29 +68,6 @@ export function registerNode(providerId, body) {
 
 export function listNodes(providerId) {
   return [...store.nodes.values()].filter(n => n.provider_id === providerId);
-}
-
-/**
- * Stub attest for demo/non-live nodes.
- * Live nodes must use agent challenge/verify.
- */
-export function attestNode(providerId, nodeId) {
-  const node = store.nodes.get(nodeId);
-  if (!node) { const e = new Error('node not found'); e.status = 404; throw e; }
-  if (node.provider_id !== providerId) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
-
-  if (isLiveNode(node) && process.env.ALLOW_STUB_ATTEST !== '1') {
-    const e = new Error(
-      'Live nodes require agent attestation. POST /v1/nodes/:id/attest/challenge then verify via neo-agent.',
-    );
-    e.status = 400;
-    throw e;
-  }
-
-  node.attestation_status = 'attested';
-  node.attested_at = new Date().toISOString();
-  schedulePersist();
-  return node;
 }
 
 export function beginAttest(providerId, nodeId) {

@@ -61,7 +61,7 @@ node --test
 npm start
 ```
 
-Open http://localhost:8788 — listings, **Get API Key**, reserve, `#models` chat.
+Open http://localhost:8788 — listings, **Get API Key**, reserve.
 
 ---
 
@@ -80,14 +80,13 @@ Environment (defaults in `render.yaml`):
 |---|---|
 | `NODE_ENV` | `production` |
 | `CANONICAL_DOMAIN` | `neocloudsmarketplace.com` |
-| `SEED_DEMO` | `1` |
 | `BETA_TESTING` | `0` |
 | `NEO_DB_PATH` | `/var/data/neo-clouds.sqlite` |
 | `ADMIN_API_KEY` | set in the dashboard (operator inbox) |
 | `NEO_OPERATOR_EMAIL` | inbox that should receive contact and waitlist mail |
 | `RESEND_API_KEY` + `NEO_MAIL_FROM` | or `NEO_MAIL_WEBHOOK_URL` instead |
 
-The homepage always shows that reserve/inference are simulated and that nothing is charged. Optional `BETA_MESSAGE` overrides that wording. Do not add Stripe or checkout until real hardware is live.
+The homepage always shows that nothing is charged. Optional `BETA_MESSAGE` overrides that wording. Do not add Stripe or checkout until you decide to bill.
 
 ---
 
@@ -119,9 +118,9 @@ Browser:
 
 - `/` — marketing home  
 - `/marketplace` — GPU marketplace app  
-- `/about.html`, `/contact.html`, `/providers.html`  
+- `/about.html`, `/contact.html`, `/console.html`  
 - `/privacy.html`, `/terms.html`  
-- **Get API Key** → reserve → inference **Try**
+- **Get API Key** → reserve a listing whose agent is online
 
 ---
 
@@ -129,15 +128,13 @@ Browser:
 
 > **Neo Clouds** — open GPU marketplace  
 > https://neocloudsmarketplace.com  
-> Browse H100/A100 listings, get an API key, reserve compute, run inference.
+> Browse live GPU and TPU listings, get an API key, reserve compute.
 
 ---
 
 ## Step 7 — After real providers join
 
-Render → `SEED_DEMO=0` → redeploy.
-
-Provider flow: share **[/providers.html](./public/providers.html)** (waitlist + inventory). Dry-run API: **Get API Key (Provider)** → register node → attest → listing → optional model. See [PROVIDER-PILOT.md](./PROVIDER-PILOT.md).
+Provider flow: share **[/console.html](./public/console.html)**. **Get API Key (Provider)** → register a live node → neo-agent attest and heartbeat → listing. See [HARDWARE.md](./HARDWARE.md).
 
 ---
 
@@ -160,5 +157,5 @@ Provider flow: share **[/providers.html](./public/providers.html)** (waitlist + 
 |---|---|
 | AI Hub page on your domain | Wrong Render service — domain must point to **neo-clouds-marketplace**, not student-ai-hub |
 | `/` 404 | Render Root Directory must be blank for standalone repo |
-| Empty listings | `SEED_DEMO=1` or add provider listings |
+| Empty listings | A provider must register a live node and keep neo-agent online |
 | Domain not verifying | DNS propagation; match Render records exactly |

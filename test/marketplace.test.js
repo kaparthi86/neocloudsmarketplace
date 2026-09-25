@@ -5,6 +5,7 @@
 
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { createMarketplaceServer } from '../src/server.js';
 
 // ---------------------------------------------------------------------------
@@ -23,6 +24,25 @@ async function req(server, method, path, body, apiKey) {
   let json;
   try { json = await res.json(); } catch { json = null; }
   return { status: res.status, body: json };
+}
+
+async function attestOnline(server, nodeId, apiKey) {
+  const ch = await req(server, 'POST', `/v1/nodes/${nodeId}/attest/challenge`, {}, apiKey);
+  assert.equal(ch.status, 201, JSON.stringify(ch.body));
+  const fp = `fp-${nodeId}`;
+  const proof = createHash('sha256').update(`${ch.body.nonce}:${fp}`).digest('hex');
+  const v = await req(server, 'POST', '/v1/agent/attest/verify', {
+    challenge_id: ch.body.challenge_id,
+    nonce: ch.body.nonce,
+    hardware_fingerprint: fp,
+    proof,
+  }, apiKey);
+  assert.equal(v.status, 200, JSON.stringify(v.body));
+  const hb = await req(server, 'POST', '/v1/agent/heartbeat', {
+    node_id: nodeId,
+    hardware_fingerprint: fp,
+  }, apiKey);
+  assert.equal(hb.status, 200, JSON.stringify(hb.body));
 }
 
 function startServer() {
@@ -121,15 +141,16 @@ describe('2 – Provider onboarding', async () => {
     assert.ok(r.body.some(n => n.node_id === nodeId));
   });
 
-  it('attests a node', async () => {
-    const r = await req(server, 'POST', `/v1/nodes/${nodeId}/attest`, {}, providerKey);
-    assert.equal(r.status, 200);
-    assert.equal(r.body.attestation_status, 'attested');
-    assert.ok(r.body.attested_at);
+  it('attests a node with an agent proof', async () => {
+    await attestOnline(server, nodeId, providerKey);
+    const nodes = await req(server, 'GET', '/v1/nodes', undefined, providerKey);
+    const node = nodes.body.find(n => n.node_id === nodeId);
+    assert.equal(node.attestation_status, 'attested');
+    assert.ok(node.attested_at);
   });
 
-  it('returns 404 for unknown node', async () => {
-    const r = await req(server, 'POST', '/v1/nodes/node_bad_x/attest', {}, providerKey);
+  it('returns 404 for an unknown attest challenge', async () => {
+    const r = await req(server, 'POST', '/v1/nodes/node_bad_x/attest/challenge', {}, providerKey);
     assert.equal(r.status, 404);
   });
 });
@@ -151,7 +172,7 @@ describe('3 – Listings', async () => {
       hostname: 'gpu2.example.com', gpu_model: 'A100-80GB', gpu_count: 8, vram_gb_per_gpu: 80, interconnect: 'InfiniBand', region: 'eu-west-1',
     }, providerKey);
     nodeId = n.body.node_id;
-    await req(server, 'POST', `/v1/nodes/${nodeId}/attest`, {}, providerKey);
+    await attestOnline(server, nodeId, providerKey);
   });
   after(async () => { await stopServer(server); });
 
@@ -189,7 +210,7 @@ describe('3 – Listings', async () => {
       hostname: 'gpu-workload.example.com', gpu_model: 'H100-SXM5-80GB', gpu_count: 2,
       vram_gb_per_gpu: 80, region: 'us-west-2', interconnect: 'NVLink',
     }, providerKey);
-    await req(server, 'POST', `/v1/nodes/${n2.body.node_id}/attest`, {}, providerKey);
+    await attestOnline(server, n2.body.node_id, providerKey);
     await req(server, 'POST', '/v1/listings', {
       node_id: n2.body.node_id, price_per_hour: '1.10', tags: ['training'],
     }, providerKey);
@@ -252,22 +273,26 @@ describe('4 – Reservations', async () => {
       hostname: 'res-node.example.com', gpu_model: 'H100', gpu_count: 1, vram_gb_per_gpu: 80, region: 'us-west-2',
     }, providerKey);
     nodeId = n.body.node_id;
-    await req(server, 'POST', `/v1/nodes/${nodeId}/attest`, {}, providerKey);
+    await attestOnline(server, nodeId, providerKey);
 
     const l = await req(server, 'POST', '/v1/listings', { node_id: nodeId, price_per_hour: '2.50', min_hours: 1, max_hours: 10 }, providerKey);
     listingId = l.body.listing_id;
   });
   after(async () => { await stopServer(server); });
 
-  it('creates a reservation (goes active immediately)', async () => {
+  it('creates a reservation and activates it when the agent acks', async () => {
     const r = await req(server, 'POST', '/v1/reservations', { listing_id: listingId, hours: 3 }, customerKey);
     assert.equal(r.status, 201);
-    assert.equal(r.body.status, 'active');
-    assert.ok(r.body.connection_info);
-    assert.equal(r.body.connection_info.ssh_port, 22);
+    assert.equal(r.body.status, 'pending_provision');
     assert.equal(r.body.hours, 3);
-    assert.equal(r.body.simulated, true);
+    assert.equal(r.body.simulated, false);
     assert.equal(r.body.payment_collected, false);
+    const ack = await req(server, 'POST', `/v1/agent/reservations/${r.body.reservation_id}/ack`, {
+      ssh_host: 'res-node.example.com', ssh_user: 'neo',
+    }, providerKey);
+    assert.equal(ack.status, 200);
+    assert.equal(ack.body.status, 'active');
+    assert.equal(ack.body.connection_info.ssh_port, 22);
     reservationId = r.body.reservation_id;
   });
 
@@ -314,148 +339,10 @@ describe('4 – Reservations', async () => {
   it('validates min_hours', async () => {
     const p2 = await req(server, 'POST', '/v1/auth/register', { name: 'Prov4b', email: 'p4b@test.com', role: 'provider' });
     const n2 = await req(server, 'POST', '/v1/nodes', { hostname: 'h.example.com', gpu_model: 'A10', gpu_count: 1, vram_gb_per_gpu: 24, region: 'us' }, p2.body.api_key);
-    await req(server, 'POST', `/v1/nodes/${n2.body.node_id}/attest`, {}, p2.body.api_key);
+    await attestOnline(server, n2.body.node_id, p2.body.api_key);
     const l2 = await req(server, 'POST', '/v1/listings', { node_id: n2.body.node_id, price_per_hour: '1.00', min_hours: 5 }, p2.body.api_key);
     const r = await req(server, 'POST', '/v1/reservations', { listing_id: l2.body.listing_id, hours: 2 }, customerKey);
     assert.equal(r.status, 400);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 5. Inference gateway
-// ---------------------------------------------------------------------------
-describe('5 – Inference gateway', async () => {
-  let server, providerKey, customerKey, nodeId, modelId, modelName;
-
-  before(async () => {
-    server = await startServer();
-    const p = await req(server, 'POST', '/v1/auth/register', { name: 'Prov5', email: 'p5@test.com', role: 'provider' });
-    providerKey = p.body.api_key;
-    const c = await req(server, 'POST', '/v1/auth/register', { name: 'Cust5', email: 'c5@test.com', role: 'customer' });
-    customerKey = c.body.api_key;
-
-    const n = await req(server, 'POST', '/v1/nodes', { hostname: 'inf.example.com', gpu_model: 'A100', gpu_count: 2, vram_gb_per_gpu: 80, region: 'us-central-1' }, providerKey);
-    nodeId = n.body.node_id;
-    await req(server, 'POST', `/v1/nodes/${nodeId}/attest`, {}, providerKey);
-  });
-  after(async () => { await stopServer(server); });
-
-  it('registers a model', async () => {
-    modelName = 'meta-llama/Llama-3-8B-Instruct';
-    const r = await req(server, 'POST', '/v1/models', {
-      node_id: nodeId,
-      model_name: modelName,
-      model_family: 'llama3',
-      context_length: 8192,
-      input_price_per_1k_tokens: '0.20',
-      output_price_per_1k_tokens: '0.40',
-    }, providerKey);
-    assert.equal(r.status, 201);
-    assert.equal(r.body.model_name, modelName);
-    modelId = r.body.model_id;
-  });
-
-  it('lists models', async () => {
-    const r = await req(server, 'GET', '/v1/models', undefined, customerKey);
-    assert.equal(r.status, 200);
-    assert.ok(Array.isArray(r.body));
-    assert.ok(r.body.some(m => m.model_id === modelId));
-  });
-
-  it('POST /v1/chat/completions (non-stream) returns completion', async () => {
-    const r = await req(server, 'POST', '/v1/chat/completions', {
-      model: modelName,
-      messages: [{ role: 'user', content: 'Hello!' }],
-    }, customerKey);
-    assert.equal(r.status, 200);
-    assert.equal(r.body.object, 'chat.completion');
-    assert.ok(r.body.choices);
-    assert.ok(r.body.choices[0].message.content);
-    assert.ok(r.body.usage.prompt_tokens > 0);
-    assert.ok(r.body.usage.cost_usd);
-    assert.equal(r.body.usage.simulated, true);
-    assert.equal(r.body.usage.payment_collected, false);
-  });
-
-  it('POST /v1/chat/completions resolves model by model_id too', async () => {
-    const r = await req(server, 'POST', '/v1/chat/completions', {
-      model: modelId,
-      messages: [{ role: 'user', content: 'Hi' }],
-    }, customerKey);
-    assert.equal(r.status, 200);
-    assert.equal(r.body.object, 'chat.completion');
-  });
-
-  it('returns 404 for unknown model', async () => {
-    const r = await req(server, 'POST', '/v1/chat/completions', {
-      model: 'nonexistent-model',
-      messages: [{ role: 'user', content: 'Hi' }],
-    }, customerKey);
-    assert.equal(r.status, 404);
-  });
-
-  it('GET /v1/usage returns usage events', async () => {
-    const r = await req(server, 'GET', '/v1/usage', undefined, customerKey);
-    assert.equal(r.status, 200);
-    assert.ok(Array.isArray(r.body));
-    assert.ok(r.body.length > 0);
-    assert.ok(r.body[0].input_tokens > 0);
-  });
-
-  it('GET /v1/usage/summary returns totals', async () => {
-    const r = await req(server, 'GET', '/v1/usage/summary', undefined, customerKey);
-    assert.equal(r.status, 200);
-    assert.ok(r.body.total_input_tokens >= 0);
-    assert.equal(r.body.simulated, true);
-    assert.equal(r.body.payment_collected, false);
-    assert.ok(r.body.total_cost_usd !== undefined);
-  });
-
-  it('deletes a model', async () => {
-    const r = await req(server, 'DELETE', `/v1/models/${modelId}`, undefined, providerKey);
-    assert.equal(r.status, 200);
-    assert.equal(r.body.deleted, true);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// 6. Stats and leaderboard
-// ---------------------------------------------------------------------------
-describe('6 – Stats and leaderboard', async () => {
-  let server, providerKey, customerKey;
-
-  before(async () => {
-    server = await startServer();
-    const p = await req(server, 'POST', '/v1/auth/register', { name: 'Prov6', email: 'p6@test.com', role: 'provider' });
-    providerKey = p.body.api_key;
-    const c = await req(server, 'POST', '/v1/auth/register', { name: 'Cust6', email: 'c6@test.com', role: 'customer' });
-    customerKey = c.body.api_key;
-  });
-  after(async () => { await stopServer(server); });
-
-  it('GET /v1/stats returns stats shape', async () => {
-    const r = await req(server, 'GET', '/v1/stats');
-    assert.equal(r.status, 200);
-    assert.ok(typeof r.body.providers === 'number');
-    assert.ok(typeof r.body.nodes === 'object');
-    assert.ok(typeof r.body.listings === 'object');
-    assert.ok(typeof r.body.models === 'object');
-    assert.ok(typeof r.body.reservations === 'object');
-    assert.ok(Array.isArray(r.body.gpu_models));
-    assert.ok(Array.isArray(r.body.accelerator_types));
-    assert.ok(Array.isArray(r.body.regions));
-    assert.equal(r.body.currency, 'USD');
-  });
-
-  it('GET /v1/leaderboard returns array', async () => {
-    const r = await req(server, 'GET', '/v1/leaderboard', undefined, customerKey);
-    assert.equal(r.status, 200);
-    assert.ok(Array.isArray(r.body));
-  });
-
-  it('stats reflects registered providers', async () => {
-    const r = await req(server, 'GET', '/v1/stats');
-    assert.ok(r.body.providers >= 1);
   });
 });
 
@@ -492,14 +379,6 @@ describe('7 – HTTP integration', async () => {
     assert.match(await contact.text(), /Contact/i);
   });
 
-  it('GET /system-design.html is served', async () => {
-    const res = await fetch(`${base(server)}/system-design.html`);
-    assert.equal(res.status, 200);
-    const html = await res.text();
-    assert.match(html, /System Design/i);
-    assert.match(html, /mermaid/);
-  });
-
   it('POST /v1/contact accepts inbound messages', async () => {
     const before = await req(server, 'GET', '/v1/contact');
     const r = await req(server, 'POST', '/v1/contact', {
@@ -528,8 +407,7 @@ describe('7 – HTTP integration', async () => {
     const n = await req(server, 'POST', '/v1/nodes', { hostname: 'full.example.com', gpu_model: 'H200', gpu_count: 8, vram_gb_per_gpu: 141, interconnect: 'NVLink', region: 'us-east-2' }, pk);
     assert.equal(n.status, 201);
 
-    const attest = await req(server, 'POST', `/v1/nodes/${n.body.node_id}/attest`, {}, pk);
-    assert.equal(attest.body.attestation_status, 'attested');
+    await attestOnline(server, n.body.node_id, pk);
 
     const l = await req(server, 'POST', '/v1/listings', { node_id: n.body.node_id, price_per_hour: '5.00' }, pk);
     assert.equal(l.body.available, true);
@@ -537,6 +415,11 @@ describe('7 – HTTP integration', async () => {
     const res = await req(server, 'POST', '/v1/reservations', { listing_id: l.body.listing_id, hours: 4 }, ck);
     assert.equal(res.status, 201);
     assert.equal(res.body.total_price, '20.00');
+    assert.equal(res.body.status, 'pending_provision');
+    const ack = await req(server, 'POST', `/v1/agent/reservations/${res.body.reservation_id}/ack`, {
+      ssh_host: 'full.example.com', ssh_user: 'neo',
+    }, pk);
+    assert.equal(ack.body.status, 'active');
 
     const comp = await req(server, 'POST', `/v1/reservations/${res.body.reservation_id}/complete`, {}, pk);
     assert.equal(comp.body.status, 'completed');
@@ -557,18 +440,15 @@ describe('7 – Launch readiness', async () => {
     assert.equal(r.body.ok, true);
     assert.equal(r.body.service, 'neo-clouds-marketplace');
     assert.equal(r.body.indexHtmlDeployed, true);
-    assert.equal(r.body.simulated, true);
     assert.equal(r.body.paymentsEnabled, false);
-    assert.match(r.body.betaMessage, /simulated/i);
-    assert.match(r.body.betaMessage, /do not charge|payments/i);
+    assert.match(r.body.betaMessage, /payments/i);
   });
 
-  it('GET /api/config always advertises simulated + no payments', async () => {
+  it('GET /api/config advertises no payments', async () => {
     const r = await req(server, 'GET', '/api/config');
     assert.equal(r.status, 200);
-    assert.equal(r.body.simulated, true);
     assert.equal(r.body.paymentsEnabled, false);
-    assert.match(r.body.betaMessage, /simulated/i);
+    assert.match(r.body.betaMessage, /payments/i);
   });
 
   it('registers a TPU node and filters listings by accelerator_type', async () => {
@@ -587,7 +467,7 @@ describe('7 – Launch readiness', async () => {
     }, p.body.api_key);
     assert.equal(n.status, 201);
     assert.equal(n.body.accelerator_type, 'tpu');
-    await req(server, 'POST', `/v1/nodes/${n.body.node_id}/attest`, {}, p.body.api_key);
+    await attestOnline(server, n.body.node_id, p.body.api_key);
     await req(server, 'POST', '/v1/listings', { node_id: n.body.node_id, price_per_hour: '1.60' }, p.body.api_key);
     const tpus = await req(server, 'GET', '/v1/listings?accelerator_type=tpu');
     assert.equal(tpus.status, 200);
@@ -600,110 +480,5 @@ describe('7 – Launch readiness', async () => {
     assert.ok(Array.isArray(r.body));
   });
 
-  it('GET /v1/models works without auth', async () => {
-    const r = await req(server, 'GET', '/v1/models');
-    assert.equal(r.status, 200);
-    assert.ok(Array.isArray(r.body));
-  });
-
-  it('GET /v1/leaderboard works without auth', async () => {
-    const r = await req(server, 'GET', '/v1/leaderboard');
-    assert.equal(r.status, 200);
-    assert.ok(Array.isArray(r.body));
-  });
-
-  it('serves provider pilot page', async () => {
-    const res = await fetch(`${base(server)}/providers.html`);
-    assert.equal(res.status, 200);
-    const html = await res.text();
-    assert.match(html, /Provider pilot/i);
-    assert.match(html, /provider-pilot/i);
-  });
-
-  it('accepts provider pilot waitlist submissions', async () => {
-    const before = await req(server, 'GET', '/v1/provider-pilot');
-    assert.equal(before.status, 200);
-    assert.equal(before.body.waitlist, true);
-    assert.equal(before.body.paymentsEnabled, false);
-    assert.equal(before.body.liveProvisioning, false);
-
-    const r = await req(server, 'POST', '/v1/provider-pilot', {
-      name: 'Ops Lead',
-      email: `ops-${Date.now()}@atlas.test`,
-      company: 'Atlas GPU',
-      region: 'us-east-1',
-      accelerator_type: 'gpu',
-      accelerator_model: 'H100-SXM5-80GB',
-      accelerator_count: 8,
-      memory_gb_per_chip: 80,
-      interconnect: 'NVLink',
-      price_per_hour: '2.85',
-      workloads: ['training', 'inference'],
-      notes: 'Pilot inventory only',
-    });
-    assert.equal(r.status, 201);
-    assert.ok(r.body.interest_id);
-    assert.equal(r.body.status, 'waitlist');
-    assert.match(r.body.message, /waitlist|follow up/i);
-
-    const after = await req(server, 'GET', '/v1/provider-pilot');
-    assert.equal(after.body.count, before.body.count + 1);
-
-    const health = await req(server, 'GET', '/api/health');
-    assert.ok(health.body.providerPilotWaitlist >= 1);
-  });
-
-  it('rejects provider pilot without email', async () => {
-    const r = await req(server, 'POST', '/v1/provider-pilot', { name: 'No Email' });
-    assert.equal(r.status, 400);
-  });
 });
 
-// ---------------------------------------------------------------------------
-// 8. Demo sample customer key (SEED_DEMO)
-// ---------------------------------------------------------------------------
-describe('8 – Demo sample customer key', async () => {
-  let server;
-  let DEMO_CUSTOMER_API_KEY;
-
-  before(async () => {
-    process.env.SEED_DEMO = '1';
-    const seed = await import('../src/seed.js');
-    DEMO_CUSTOMER_API_KEY = seed.DEMO_CUSTOMER_API_KEY;
-    seed.seedDemoMarketplace();
-    server = await startServer();
-  });
-  after(async () => {
-    delete process.env.SEED_DEMO;
-    await stopServer(server);
-  });
-
-  it('GET /api/config exposes the sample customer key', async () => {
-    const r = await req(server, 'GET', '/api/config');
-    assert.equal(r.status, 200);
-    assert.equal(r.body.seedDemoEnabled, true);
-    assert.equal(r.body.demoCustomerApiKey, DEMO_CUSTOMER_API_KEY);
-    assert.match(r.body.demoCustomerHint || '', /sample|reserve/i);
-  });
-
-  it('sample customer key authenticates and can reserve a seeded listing', async () => {
-    const me = await req(server, 'GET', '/v1/auth/me', undefined, DEMO_CUSTOMER_API_KEY);
-    assert.equal(me.status, 200);
-    assert.equal(me.body.role, 'customer');
-
-    const listings = await req(server, 'GET', '/v1/listings?available=true&gpu_model=H100-SXM5-80GB');
-    assert.equal(listings.status, 200);
-    assert.ok(listings.body.length >= 1);
-    const listing = listings.body.find(l => (l.min_hours || 1) <= 1) || listings.body[0];
-    const hours = Math.max(1, listing.min_hours || 1);
-
-    const r = await req(server, 'POST', '/v1/reservations', {
-      listing_id: listing.listing_id,
-      hours,
-    }, DEMO_CUSTOMER_API_KEY);
-    assert.equal(r.status, 201, `reserve failed: ${JSON.stringify(r.body)} listing=${listing.listing_id} hours=${hours}`);
-    assert.ok(r.body.reservation_id);
-    assert.equal(r.body.simulated, true);
-    assert.equal(r.body.payment_collected, false);
-  });
-});

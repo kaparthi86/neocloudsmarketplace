@@ -1,13 +1,13 @@
 # Neo Clouds Marketplace
 
-Open GPU marketplace and inference platform — **separate from [Student AI Hub](https://github.com/kaparthi86/Student-AI-Hub)**.
+Open GPU and TPU marketplace — **separate from [Student AI Hub](https://github.com/kaparthi86/Student-AI-Hub)**.
 
 **Live site:** [neocloudsmarketplace.com](https://neocloudsmarketplace.com)  
 **Launch guide:** [LAUNCH.md](./LAUNCH.md)  
-**System design:** [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) · [HTML](./public/system-design.html) · [PDF](./public/system-design.pdf)  
+**System design:** [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md)  
 **Product boundary:** [PRODUCT.md](./PRODUCT.md)
 
-Providers list **GPUs and TPUs**. Customers browse by accelerator type, model, region, and price, reserve hours, and call models via an OpenAI-compatible API.
+Providers list **GPUs and TPUs**. Customers browse by accelerator type, model, region, and price, and reserve hours on a machine whose agent is online.
 
 **Site:** [Home](https://neocloudsmarketplace.com/) · [Marketplace](https://neocloudsmarketplace.com/marketplace) · [About](https://neocloudsmarketplace.com/about.html) · [Contact](https://neocloudsmarketplace.com/contact.html)
 
@@ -20,8 +20,6 @@ npm start
 # → http://localhost:8788
 ```
 
-`SEED_DEMO=1` loads sample H100/A100 listings and models.
-
 ## Deploy (standalone)
 
 1. Use repo **`neo-clouds-marketplace`** (not Student-AI-Hub) — see [LAUNCH.md](./LAUNCH.md)
@@ -33,12 +31,10 @@ npm start
 
 - GPU listings, reservations, provider nodes + attestation
 - **Live hardware connect:** neo-agent heartbeat, challenge attest, provision ack — see [HARDWARE.md](./HARDWARE.md)
-- OpenAI-compatible `/v1/chat/completions` with streaming
-- Public browse; API keys for reserve and inference
-- Provider pilot waitlist: [/providers.html](./public/providers.html) · [PROVIDER-PILOT.md](./PROVIDER-PILOT.md)
+- Public browse; API keys for reserve
 - Provider console: [/console.html](./public/console.html)
 - SQLite on a persistent disk (`NEO_DB_PATH`)
-- Operator inbox at `/admin` (contact, waitlist, node heartbeats)
+- Operator inbox at `/admin` (contact notes, node heartbeats)
 - API key recovery and rotation
 - Reservation expiry (window end and provision timeout)
 - Privacy, Terms, health check, request log, beta banner
@@ -53,9 +49,7 @@ npm start
 | `POST` | `/v1/auth/rotate` | Any key |
 | `GET` | `/v1/admin/overview` | Operator key |
 | `GET` | `/v1/listings` | No |
-| `GET` | `/v1/models` | No |
 | `POST` | `/v1/reservations` | Customer key |
-| `POST` | `/v1/chat/completions` | Any key |
 
 ## License
 

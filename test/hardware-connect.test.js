@@ -78,10 +78,9 @@ describe('Live hardware connect', async () => {
 
   after(async () => { await stopServer(server); });
 
-  it('rejects stub attest on live nodes', async () => {
+  it('does not offer one-click attest', async () => {
     const r = await req(server, 'POST', `/v1/nodes/${nodeId}/attest`, {}, providerKey);
-    assert.equal(r.status, 400);
-    assert.match(r.body.message, /agent attestation/i);
+    assert.equal(r.status, 404);
   });
 
   it('challenge + verify attests the node', async () => {

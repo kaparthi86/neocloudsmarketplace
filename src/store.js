@@ -11,9 +11,6 @@ export const store = {
   nodes: new Map(),         // node_id -> node
   listings: new Map(),      // listing_id -> listing
   reservations: new Map(),  // reservation_id -> reservation
-  models: new Map(),        // model_id -> model
-  usageEvents: [],          // append-only
-  providerPilot: [],        // provider waitlist / inventory interest (pilot)
   contactMessages: [],      // public contact form
   attestChallenges: new Map(), // challenge_id -> challenge
 };
