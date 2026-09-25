@@ -4,6 +4,7 @@
 
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { createMarketplaceServer } from '../src/server.js';
 import { store } from '../src/store.js';
 import { expireReservations } from '../src/lifecycle.js';
@@ -92,14 +93,24 @@ describe('Launch readiness', async () => {
       hostname: 'exp.example.com', gpu_model: 'A100', gpu_count: 1, vram_gb_per_gpu: 80,
       interconnect: 'PCIe', region: 'us-west-1',
     }, p.body.api_key);
-    await req(server, 'POST', `/v1/nodes/${n.body.node_id}/attest`, {}, p.body.api_key);
+    const ch = await req(server, 'POST', `/v1/nodes/${n.body.node_id}/attest/challenge`, {}, p.body.api_key);
+    const fp = 'fp-exp';
+    const proof = createHash('sha256').update(`${ch.body.nonce}:${fp}`).digest('hex');
+    await req(server, 'POST', '/v1/agent/attest/verify', {
+      challenge_id: ch.body.challenge_id, nonce: ch.body.nonce, hardware_fingerprint: fp, proof,
+    }, p.body.api_key);
+    await req(server, 'POST', '/v1/agent/heartbeat', { node_id: n.body.node_id, hardware_fingerprint: fp }, p.body.api_key);
     const l = await req(server, 'POST', '/v1/listings', {
       node_id: n.body.node_id, price_per_hour: '1.00',
     }, p.body.api_key);
     const created = await req(server, 'POST', '/v1/reservations', {
       listing_id: l.body.listing_id, hours: 1,
     }, c.body.api_key);
-    assert.equal(created.body.status, 'active');
+    assert.equal(created.body.status, 'pending_provision');
+    const ack = await req(server, 'POST', `/v1/agent/reservations/${created.body.reservation_id}/ack`, {
+      ssh_host: 'exp.example.com', ssh_user: 'neo',
+    }, p.body.api_key);
+    assert.equal(ack.body.status, 'active');
     const row = store.reservations.get(created.body.reservation_id);
     row.ends_at = new Date(Date.now() - 1000).toISOString();
     const changed = expireReservations();

@@ -31,8 +31,6 @@ export function registerAccount({ name, email, role, api_key: fixedKey }) {
     email: normalizedEmail,
     role,
     api_key,
-    email_verified: false,
-    verify_token: randomBytes(16).toString('hex'),
     created_at: new Date().toISOString(),
   };
   store.accounts.set(api_key, account);
@@ -61,25 +59,6 @@ export function rotateApiKey(account) {
   store.accounts.set(fresh, account);
   schedulePersist();
   return account;
-}
-
-export function verifyEmailToken(token) {
-  if (!token || typeof token !== 'string') {
-    const err = new Error('token is required');
-    err.status = 400;
-    throw err;
-  }
-  const account = [...store.accounts.values()].find(a => a.verify_token === token);
-  if (!account) {
-    const err = new Error('verification token not found');
-    err.status = 404;
-    throw err;
-  }
-  account.email_verified = true;
-  account.verified_at = new Date().toISOString();
-  account.verify_token = null;
-  schedulePersist();
-  return { email: account.email, email_verified: true };
 }
 
 export function getAccountByKey(key) {

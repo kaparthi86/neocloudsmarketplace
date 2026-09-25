@@ -5,7 +5,7 @@
 | | Student AI Hub | Neo Clouds |
 |---|---|---|
 | Domain | Your AI Hub URL | **neocloudsmarketplace.com** |
-| Product | Student + Finance AI tutoring | GPU + TPU accelerator marketplace + inference API |
+| Product | Student + Finance AI tutoring | GPU + TPU accelerator marketplace |
 | Users | Students, learners | Accelerator providers + ML customers |
 | Deploy | Root `render.yaml` → `student-ai-hub` | **`neo-clouds/render.yaml`** → `neo-clouds-marketplace` |
 | Repo (recommended) | `Student-AI-Hub` | **`neo-clouds-marketplace`** (standalone; private OK) |

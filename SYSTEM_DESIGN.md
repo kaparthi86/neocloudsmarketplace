@@ -1,6 +1,6 @@
 # Neo Clouds — System Design Document
 
-**Status:** Early access / working prototype  
+**Status:** Design record. The running product no longer serves this page, seeded listings, canned chat, the leaderboard, the provider waitlist, or one-click attest.  
 **Canonical site:** https://neocloudsmarketplace.com  
 **Aligned paper:** `papers/neo-clouds-unused-accelerator-marketplace.md` (research preprint; open/merge that PR if not on `main` yet)  
 **Hardware connect guide:** [HARDWARE.md](./HARDWARE.md)  

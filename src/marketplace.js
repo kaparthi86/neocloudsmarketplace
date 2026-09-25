@@ -2,9 +2,8 @@
  * Neo Clouds GPU Marketplace — production entry point
  */
 
-import { initPersistence, closePersistence, persistNow } from './db.js';
+import { initPersistence, closePersistence } from './db.js';
 import { createMarketplaceServer } from './server.js';
-import { seedDemoMarketplace } from './seed.js';
 import { expireReservations } from './lifecycle.js';
 
 const PORT = Number(process.env.PORT || 8788);
@@ -21,8 +20,6 @@ process.on('unhandledRejection', (err) => {
 
 try {
   const dbInfo = initPersistence();
-  const seedInfo = seedDemoMarketplace();
-  if (seedInfo) persistNow();
   const server = createMarketplaceServer();
   server.on('error', (err) => {
     console.error('FATAL server listen error:', err);
@@ -33,12 +30,6 @@ try {
     console.log(`Neo Clouds Marketplace listening on http://${HOST}:${PORT}`);
     console.log(`Canonical domain: https://${domain}`);
     console.log(`Persistence: ${dbInfo.path}`);
-    if (seedInfo) {
-      console.log('SEED_DEMO=1 — demo listings and models loaded.');
-      if (seedInfo.demoCustomerApiKey) {
-        console.log(`Sample customer API key: ${seedInfo.demoCustomerApiKey}`);
-      }
-    }
     console.log('Live hardware: neo-agent heartbeat + challenge attest + provision ack enabled.');
     console.log('Reservation expiry sweeper running.');
     console.log('Payments remain disabled.');

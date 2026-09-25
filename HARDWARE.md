@@ -37,7 +37,7 @@ node scripts/neo-agent.mjs
 
 ## Customer onboarding
 
-1. `/marketplace` → **Get API Key** as **Customer** (or sample key if `SEED_DEMO=1`)  
+1. `/marketplace` → **Get API Key** as **Customer**  
 2. Browse listings — live nodes show when agent is online  
 3. Reserve → if live, status `pending_provision` then `active` after agent ack  
 4. Use `connection_info` (SSH host/user/token) — **still no payments**
@@ -64,7 +64,7 @@ curl -s -X POST "$API/v1/agent/heartbeat" -H "Authorization: Bearer $NKP" -H 'Co
 | `NEO_DB_PATH` | SQLite path (`:memory:` for tests) |
 | `AGENT_HEARTBEAT_TTL_MS` | Online window (default 90000) |
 | `ALLOW_STUB_ATTEST=1` | Allow flag-flip attest on live nodes (dev only) |
-| `SEED_DEMO=1` | Demo listings + sample customer key |
+| `ADMIN_API_KEY` | Operator inbox at `/admin` |
 
 **Deploy note:** `render.yaml` uses the Render starter plan and a 1GB disk mounted at `/var/data`. SQLite lives at `NEO_DB_PATH=/var/data/neo-clouds.sqlite`. The free plan sleeps and cannot keep that disk, so live heartbeats and saved keys would not survive.
 
@@ -76,4 +76,4 @@ curl -s -X POST "$API/v1/agent/heartbeat" -H "Authorization: Bearer $NKP" -H 'Co
 
 Attestation **requires** the agent proof. Heartbeats are accepted only for nodes registered with `live: true`. Reservations expire on their own: active holds complete at `ends_at`, and `pending_provision` cancels if the agent does not ack within `RESERVATION_PROVISION_TIMEOUT_MS` (default 15 minutes).
 
-Payments remain **disabled**. Inference canned responses remain for demo models until a live inference runtime is attached.
+Payments remain **disabled**. There is no canned chat or seeded catalog. A listing is real only when neo-agent is attested and heartbeating.

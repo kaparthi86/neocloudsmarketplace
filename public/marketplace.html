@@ -136,14 +136,13 @@
 </head>
 <body>
 
-<div class="honesty-banner" id="beta-banner">Early access: demo listings are simulated. Live provider nodes use neo-agent connect. Reservations do not charge you — no payments collected.</div>
+<div class="honesty-banner" id="beta-banner">A listing is available only while the provider agent is online. Reservations do not charge you — no payments collected.</div>
 
 <nav class="site-nav">
   <a class="logo" href="/">☁ Neo Clouds</a>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/marketplace" class="active">Marketplace</a>
-    <a href="/providers.html">Providers</a>
     <a href="/console.html">Console</a>
     <a href="/about.html">About</a>
     <a href="/contact.html">Contact</a>
@@ -153,9 +152,6 @@
   <div class="app-subnav" id="app-subnav">
     <a href="#listings" class="active">Listings</a>
     <a href="#reservations">My reservations</a>
-    <a href="#models">Models</a>
-    <a href="#providers">Leaderboard</a>
-    <a href="#stats">Stats</a>
   </div>
 </nav>
 
@@ -163,21 +159,17 @@
 <div id="page-listings" class="page active">
   <div class="hero">
     <h1>GPU &amp; TPU Marketplace</h1>
-    <p>Browse listed NVIDIA GPUs and Google-style TPUs. Live nodes show when a provider agent is online; demo rows stay simulated. You will not be charged.</p>
-    <div class="stats-strip" id="hero-stats"></div>
+    <p>Browse GPUs and TPUs that a provider agent is keeping online. You will not be charged.</p>
   </div>
   <main>
     <div class="key-setup" id="key-setup-section">
       <div style="flex:1;min-width:240px">
         <h3>Get started</h3>
-        <p style="color:var(--muted);font-size:.8rem;margin-bottom:10px">Browse without a key. Reserve or chat with a free API key — demo only, no card required.</p>
-        <p id="demo-key-hint" class="notice" style="display:none;margin-bottom:10px"></p>
+        <p style="color:var(--muted);font-size:.8rem;margin-bottom:10px">Browse without a key. Reserve with a free API key. No card required.</p>
         <div class="form-group" style="margin:0">
           <input type="text" id="api-key-input" placeholder="nck_... or nkp_..." style="width:100%;max-width:360px">
         </div>
-        <code id="demo-key-value" style="display:none;font-size:.72rem;color:var(--gold);margin-top:8px;word-break:break-all"></code>
       </div>
-      <button class="btn btn-outline btn-sm" id="use-sample-key-btn" style="display:none" onclick="useSampleCustomerKey()">Use sample key</button>
       <button class="btn btn-outline btn-sm" onclick="saveKey()">Save Key</button>
       <button class="btn btn-gold btn-sm" onclick="openRegister()">Get API Key</button>
       <button class="btn btn-outline btn-sm" onclick="openRecover()">Email my key</button>
@@ -220,45 +212,11 @@
   </main>
 </div>
 
-<!-- Models page -->
-<div id="page-models" class="page">
-  <main>
-    <h2 style="margin-bottom:8px">Inference Models</h2>
-    <p class="notice">Chat is a canned simulation. Token prices are listed rates only — nothing is billed.</p>
-    <div class="card-grid" id="models-grid"></div>
-    <p id="models-empty" style="color:var(--muted);display:none">No models available.</p>
-  </main>
-</div>
-
-<!-- Providers page -->
-<div id="page-providers" class="page">
-  <main>
-    <h2 style="margin-bottom:8px">Provider Leaderboard</h2>
-    <p class="notice">Demo providers and listed rates. Reservations here do not charge anyone.</p>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
-      <table>
-        <thead><tr><th>#</th><th>Provider</th><th>Region</th><th>Reservations</th><th>Avg Price/hr</th></tr></thead>
-        <tbody id="providers-tbody"></tbody>
-      </table>
-    </div>
-  </main>
-</div>
-
-<!-- Stats page -->
-<div id="page-stats" class="page">
-  <main>
-    <h2 style="margin-bottom:20px">Marketplace Stats</h2>
-    <div class="stats-grid" id="stats-grid"></div>
-    <h3 style="margin-bottom:12px;color:var(--muted)">GPU Model Distribution</h3>
-    <div id="gpu-chart" style="font-family:monospace;font-size:0.85rem;line-height:2;background:var(--surface);padding:16px;border-radius:var(--radius);border:1px solid var(--border)"></div>
-  </main>
-</div>
-
 <!-- Register modal -->
 <div class="modal-overlay hidden" id="register-modal">
   <div class="modal">
     <h2>Get a free API key</h2>
-    <p class="notice" id="register-notice">Keys are free. Reservations and inference are simulated. We do not collect a payment method.</p>
+    <p class="notice" id="register-notice">Keys are free. We do not collect a payment method.</p>
     <div class="form-group">
       <label>Name</label>
       <input type="text" id="reg-name" placeholder="Your name">
@@ -270,7 +228,7 @@
     <div class="form-group">
       <label>Role</label>
       <select id="reg-role" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text)">
-        <option value="customer">Customer — reserve GPUs/TPUs &amp; run inference</option>
+        <option value="customer">Customer — reserve GPUs and TPUs</option>
         <option value="provider">Provider — list GPU or TPU nodes</option>
       </select>
     </div>
@@ -298,37 +256,18 @@
   </div>
 </div>
 
-<!-- Chat modal -->
-<div class="modal-overlay hidden" id="chat-modal">
-  <div class="modal" style="width:min(600px,95vw)">
-    <h2 id="chat-model-name" style="font-size:1rem;margin-bottom:8px"></h2>
-    <p class="notice">Simulated chat — canned replies, not billed, no real accelerator.</p>
-    <div class="chat-panel" id="chat-panel"></div>
-    <div class="chat-input-row">
-      <input type="text" id="chat-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendChat()">
-      <button class="btn btn-gold btn-sm" onclick="sendChat()">Send</button>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('chat-modal')">Close</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 let API_KEY = localStorage.getItem('neo_api_key') || '';
 let currentListingId = null;
-let currentModelId = null;
-let currentModelName = null;
 let accelFilter = '';
 let workloadFilter = '';
 let priceSort = 'price_asc';
 let maxPrice = '';
-let pendingAction = null; // { type: 'reserve'|'chat', ... }
-let demoCustomerApiKey = '';
-const DEFAULT_REGISTER_NOTICE = 'Keys are free. Reservations and inference are simulated. We do not collect a payment method.';
+let pendingAction = null;
+const DEFAULT_REGISTER_NOTICE = 'Keys are free. We do not collect a payment method.';
 
 // Check ?api_key= param
 const urlParams = new URLSearchParams(location.search);
@@ -344,7 +283,7 @@ validateStoredKey();
 // ---------------------------------------------------------------------------
 // Routing
 // ---------------------------------------------------------------------------
-const pages = { listings: 'page-listings', reservations: 'page-reservations', models: 'page-models', providers: 'page-providers', stats: 'page-stats' };
+const pages = { listings: 'page-listings', reservations: 'page-reservations' };
 let reservationPoll = null;
 
 function navigate(hash) {
@@ -355,11 +294,8 @@ function navigate(hash) {
   document.querySelectorAll('#app-subnav a').forEach(a => {
     a.classList.toggle('active', a.getAttribute('href') === `#${page}`);
   });
-  if (page === 'listings') { loadStats(); loadListings(); }
+  if (page === 'listings') loadListings();
   else if (page === 'reservations') loadReservations();
-  else if (page === 'models') loadModels();
-  else if (page === 'providers') loadProviders();
-  else if (page === 'stats') loadStatsPage();
 }
 
 window.addEventListener('hashchange', () => navigate(location.hash));
@@ -419,7 +355,7 @@ function promptForCustomerKey(message) {
 async function ensureCustomerKey(action) {
   if (!API_KEY) {
     pendingAction = action || null;
-    promptForCustomerKey('Create a free customer API key to reserve or chat. Demo only — no charge.');
+    promptForCustomerKey('Create a free customer API key to reserve. No charge.');
     return false;
   }
   try {
@@ -447,8 +383,6 @@ async function resumePendingAction() {
     document.getElementById('reserve-info').textContent = action.info || '';
     document.getElementById('reserve-hours').value = action.hours || 1;
     document.getElementById('reserve-modal').classList.remove('hidden');
-  } else if (action.type === 'chat') {
-    openChat(action.modelId, action.modelName);
   }
 }
 
@@ -457,31 +391,7 @@ async function loadSiteConfig() {
     const cfg = await fetch('/api/config').then(r => r.json());
     const banner = document.getElementById('beta-banner');
     if (cfg.betaMessage) banner.textContent = cfg.betaMessage;
-    if (cfg.demoCustomerApiKey) {
-      demoCustomerApiKey = cfg.demoCustomerApiKey;
-      const hint = document.getElementById('demo-key-hint');
-      const value = document.getElementById('demo-key-value');
-      const btn = document.getElementById('use-sample-key-btn');
-      if (hint) {
-        hint.style.display = 'block';
-        hint.textContent = cfg.demoCustomerHint || 'Sample customer key available for demo Reserve / chat.';
-      }
-      if (value) {
-        value.style.display = 'block';
-        value.textContent = demoCustomerApiKey;
-      }
-      if (btn) btn.style.display = '';
-    }
   } catch { /* ignore */ }
-}
-
-async function useSampleCustomerKey() {
-  if (!demoCustomerApiKey) {
-    toast('Sample key not available (is SEED_DEMO=1?)', true);
-    return;
-  }
-  document.getElementById('api-key-input').value = demoCustomerApiKey;
-  await saveKey();
 }
 
 function openRegister() {
@@ -764,192 +674,6 @@ async function rotateKey() {
 }
 
 // ---------------------------------------------------------------------------
-// Models
-// ---------------------------------------------------------------------------
-async function loadModels() {
-  const grid = document.getElementById('models-grid');
-  const empty = document.getElementById('models-empty');
-  grid.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
-  try {
-    const data = await publicApi('/models');
-    if (!Array.isArray(data)) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
-    grid.innerHTML = '';
-    empty.style.display = data.length === 0 ? 'block' : 'none';
-    data.forEach(m => grid.appendChild(modelCard(m)));
-  } catch(e) {
-    grid.innerHTML = `<p style="color:var(--red)">${e.message}</p>`;
-  }
-}
-
-function modelCard(m) {
-  const div = document.createElement('div');
-  div.className = 'card';
-  div.innerHTML = `
-    <div style="margin-bottom:10px">
-      <div class="gpu-model" style="font-size:1rem">${esc(m.model_name)}</div>
-      <div class="meta">${esc(m.model_family)} · ${(m.context_length||4096).toLocaleString()} tokens ctx</div>
-    </div>
-    <div class="meta">Input (listed): <strong style="color:var(--gold)">$${esc(m.input_price_per_1k_tokens)}/1K</strong></div>
-    <div class="meta">Output (listed): <strong style="color:var(--gold)">$${esc(m.output_price_per_1k_tokens)}/1K</strong></div>
-    <div class="meta">Not billed</div>
-    <div style="margin-top:14px">
-      <button class="btn btn-gold btn-sm" onclick="openChat('${m.model_id}','${esc(m.model_name)}')">Try (simulated)</button>
-    </div>
-  `;
-  return div;
-}
-
-async function openChat(modelId, modelName) {
-  const ok = await ensureCustomerKey({ type: 'chat', modelId, modelName });
-  if (!ok) return;
-  currentModelId = modelId;
-  currentModelName = modelName;
-  document.getElementById('chat-model-name').textContent = modelName;
-  document.getElementById('chat-panel').innerHTML = '';
-  document.getElementById('chat-modal').classList.remove('hidden');
-}
-
-async function sendChat() {
-  const input = document.getElementById('chat-input');
-  const panel = document.getElementById('chat-panel');
-  const msg = input.value.trim();
-  if (!msg) return;
-
-  const ok = await ensureCustomerKey({ type: 'chat', modelId: currentModelId, modelName: currentModelName });
-  if (!ok) {
-    closeModal('chat-modal');
-    return;
-  }
-
-  input.value = '';
-
-  appendChat(panel, 'user', msg);
-  const assistantEl = appendChat(panel, 'assistant', '');
-
-  try {
-    const res = await fetch('/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
-      body: JSON.stringify({ model: currentModelName, messages: [{ role: 'user', content: msg }], stream: true }),
-    });
-
-    if (res.status === 401) {
-      clearApiKey();
-      closeModal('chat-modal');
-      pendingAction = { type: 'chat', modelId: currentModelId, modelName: currentModelName };
-      promptForCustomerKey('API key missing or invalid. Get a free customer key to chat (demo, no charge).');
-      return;
-    }
-
-    if (!res.ok) { assistantEl.querySelector('.content').textContent = 'Error'; return; }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += decoder.decode(value, { stream: true });
-      const lines = buf.split('\n');
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const d = line.slice(6);
-        if (d === '[DONE]') break;
-        try {
-          const chunk = JSON.parse(d);
-          const content = chunk.choices?.[0]?.delta?.content || '';
-          assistantEl.querySelector('.content').textContent += content;
-          panel.scrollTop = panel.scrollHeight;
-        } catch {}
-      }
-    }
-  } catch(e) { assistantEl.querySelector('.content').textContent = e.message; }
-}
-
-function appendChat(panel, role, content) {
-  const div = document.createElement('div');
-  div.className = 'chat-msg';
-  div.innerHTML = `<span class="role">${role}:</span><span class="content">${esc(content)}</span>`;
-  panel.appendChild(div);
-  panel.scrollTop = panel.scrollHeight;
-  return div;
-}
-
-// ---------------------------------------------------------------------------
-// Providers
-// ---------------------------------------------------------------------------
-async function loadProviders() {
-  const tbody = document.getElementById('providers-tbody');
-  tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>';
-  try {
-    const data = await publicApi('/leaderboard');
-    if (!Array.isArray(data) || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">No providers yet.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map((p, i) => `
-      <tr>
-        <td style="color:var(--muted)">${i + 1}</td>
-        <td><strong>${esc(p.name)}</strong><br><small style="color:var(--muted)">${p.provider_id}</small></td>
-        <td>${esc(p.region || '—')}</td>
-        <td>${p.reservation_count}</td>
-        <td style="font-family:monospace;color:var(--gold)">$${esc(p.avg_price_per_hour)}</td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red)">${e.message}</td></tr>`;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Stats
-// ---------------------------------------------------------------------------
-async function loadStats() {
-  try {
-    const s = await fetch('/v1/stats').then(r => r.json());
-    const strip = document.getElementById('hero-stats');
-    strip.innerHTML = `
-      <div class="stat-pill"><span>${s.providers}</span> Providers</div>
-      <div class="stat-pill"><span>${s.nodes.attested}</span> Attested Nodes</div>
-      <div class="stat-pill"><span>${s.listings.available}</span> Available Listings</div>
-      <div class="stat-pill"><span>${s.models.available}</span> Models</div>
-      ${s.cheapest_per_hour ? `<div class="stat-pill">From <span>$${s.cheapest_per_hour}/hr</span> listed</div>` : ''}
-    `;
-  } catch {}
-}
-
-async function loadStatsPage() {
-  try {
-    const s = await fetch('/v1/stats').then(r => r.json());
-    const grid = document.getElementById('stats-grid');
-    grid.innerHTML = `
-      <div class="stat-card"><div class="big">${s.providers}</div><div class="label">Providers</div></div>
-      <div class="stat-card"><div class="big">${s.nodes.total}</div><div class="label">Total Nodes</div></div>
-      <div class="stat-card"><div class="big">${s.nodes.attested}</div><div class="label">Attested Nodes</div></div>
-      <div class="stat-card"><div class="big">${s.listings.available}</div><div class="label">Available Listings</div></div>
-      <div class="stat-card"><div class="big">${s.models.available}</div><div class="label">Active Models</div></div>
-      <div class="stat-card"><div class="big">${s.reservations.active}</div><div class="label">Active Reservations</div></div>
-      ${s.cheapest_per_hour ? `<div class="stat-card"><div class="big" style="font-size:1.4rem">$${s.cheapest_per_hour}</div><div class="label">Cheapest/hr</div></div>` : ''}
-    `;
-
-    // Simple bar chart for GPU models
-    const chart = document.getElementById('gpu-chart');
-    if (!s.gpu_models || s.gpu_models.length === 0) {
-      chart.textContent = 'No GPU data yet.';
-      return;
-    }
-    const maxLen = 40;
-    chart.innerHTML = s.gpu_models.map(g => {
-      const bar = '█'.repeat(Math.max(3, Math.floor(Math.random() * maxLen)));
-      return `<div><span style="color:var(--muted);display:inline-block;width:220px">${esc(g)}</span> <span style="color:var(--gold)">${bar}</span></div>`;
-    }).join('');
-  } catch(e) {
-    document.getElementById('stats-grid').innerHTML = `<p style="color:var(--red)">${e.message}</p>`;
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 function esc(s) {
@@ -962,10 +686,9 @@ function closeModal(id) {
 }
 </script>
 <footer class="site-footer">
-  <p>Neo Clouds Marketplace · Early access · Simulated compute · No payments collected</p>
+  <p>Neo Clouds Marketplace · No payments collected</p>
   <p>
     <a href="/">Home</a>
-    <a href="/providers.html">Providers</a>
     <a href="/console.html">Console</a>
     <a href="/about.html">About</a>
     <a href="/contact.html">Contact</a>

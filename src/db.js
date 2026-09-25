@@ -56,9 +56,6 @@ export function loadSnapshot() {
   store.nodes.clear();
   store.listings.clear();
   store.reservations.clear();
-  store.models.clear();
-  store.usageEvents.length = 0;
-  store.providerPilot.length = 0;
   store.contactMessages.length = 0;
   store.attestChallenges.clear();
 
@@ -70,9 +67,6 @@ export function loadSnapshot() {
   for (const n of snap.nodes || []) store.nodes.set(n.node_id, n);
   for (const l of snap.listings || []) store.listings.set(l.listing_id, l);
   for (const r of snap.reservations || []) store.reservations.set(r.reservation_id, r);
-  for (const m of snap.models || []) store.models.set(m.model_id, m);
-  if (Array.isArray(snap.usageEvents)) store.usageEvents.push(...snap.usageEvents);
-  if (Array.isArray(snap.providerPilot)) store.providerPilot.push(...snap.providerPilot);
   if (Array.isArray(snap.contactMessages)) store.contactMessages.push(...snap.contactMessages);
   for (const [id, c] of Object.entries(snap.attestChallenges || {})) {
     store.attestChallenges.set(id, c);
@@ -87,9 +81,6 @@ export function captureSnapshot() {
     nodes: [...store.nodes.values()],
     listings: [...store.listings.values()],
     reservations: [...store.reservations.values()],
-    models: [...store.models.values()],
-    usageEvents: [...store.usageEvents],
-    providerPilot: [...store.providerPilot],
     contactMessages: [...store.contactMessages],
     attestChallenges: Object.fromEntries(store.attestChallenges.entries()),
     saved_at: new Date().toISOString(),

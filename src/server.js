@@ -8,15 +8,11 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { Router } from './router.js';
-import { authenticate, requireAuth, requireRole, registerAccount, rotateApiKey, verifyEmailToken, findAccountByEmail } from './auth.js';
-import { registerNode, listNodes, attestNode, deregisterNode, beginAttest } from './providers.js';
+import { authenticate, requireAuth, requireRole, registerAccount, rotateApiKey, findAccountByEmail } from './auth.js';
+import { registerNode, listNodes, deregisterNode, beginAttest } from './providers.js';
 import { createListing, listListings, getListing, updateListing, deleteListing } from './listings.js';
 import { createReservation, listReservations, getReservation, cancelReservation, completeReservation } from './reservations.js';
-import { registerModel, listModels, deleteModel, chatCompletionSync, chatCompletionStream, queryUsage, usageSummary } from './inference.js';
-import { getStats, getLeaderboard } from './stats.js';
 import { healthPayload, betaBannerText } from './health.js';
-import { submitProviderPilot, providerPilotSummary } from './provider-pilot.js';
-import { demoSeedConfig } from './seed.js';
 import { submitContact, contactSummary } from './contact.js';
 import {
   agentHeartbeat,
@@ -133,8 +129,7 @@ export function buildRouter() {
       const body = await readBody(req);
       const account = registerAccount(body);
       const mail = await sendAccountKeyEmail(account, 'new account');
-      const { verify_token, ...safe } = account;
-      created(res, { ...safe, key_emailed: mail.sent === true });
+      created(res, { ...account, key_emailed: mail.sent === true });
     } catch (e) { handleError(res, e); }
   });
 
@@ -145,7 +140,6 @@ export function buildRouter() {
       const account = findAccountByEmail(body.email);
       let emailed = false;
       if (account && isMailConfigured()) {
-        if (!account.verify_token) account.verify_token = null;
         const mail = await sendAccountKeyEmail(account, 'key recovery');
         emailed = mail.sent === true;
       }
@@ -165,15 +159,7 @@ export function buildRouter() {
       requireAuth(account);
       const rotated = rotateApiKey(account);
       const mail = await sendAccountKeyEmail(rotated, 'rotated key');
-      const { verify_token, ...safe } = rotated;
-      ok(res, { ...safe, key_emailed: mail.sent === true });
-    } catch (e) { handleError(res, e); }
-  });
-
-  router.get('/v1/auth/verify', async (req, res) => {
-    try {
-      const url = new URL(req.url, 'http://x');
-      ok(res, verifyEmailToken(url.searchParams.get('token')));
+      ok(res, { ...rotated, key_emailed: mail.sent === true });
     } catch (e) { handleError(res, e); }
   });
 
@@ -189,8 +175,7 @@ export function buildRouter() {
     try {
       const account = authenticate(req);
       requireAuth(account);
-      const { verify_token, ...safe } = account;
-      ok(res, safe);
+      ok(res, account);
     } catch (e) { handleError(res, e); }
   });
 
@@ -209,14 +194,6 @@ export function buildRouter() {
       const account = authenticate(req);
       requireRole(account, 'provider');
       ok(res, listNodes(account.account_id));
-    } catch (e) { handleError(res, e); }
-  });
-
-  router.post('/v1/nodes/:node_id/attest', async (req, res) => {
-    try {
-      const account = authenticate(req);
-      requireRole(account, 'provider');
-      ok(res, attestNode(account.account_id, req.params.node_id));
     } catch (e) { handleError(res, e); }
   });
 
@@ -320,99 +297,6 @@ export function buildRouter() {
     } catch (e) { handleError(res, e); }
   });
 
-  // Models
-  router.post('/v1/models', async (req, res) => {
-    try {
-      const account = authenticate(req);
-      requireRole(account, 'provider');
-      const body = await readBody(req);
-      created(res, registerModel(account.account_id, body));
-    } catch (e) { handleError(res, e); }
-  });
-
-  router.get('/v1/models', async (req, res) => {
-    try {
-      ok(res, listModels());
-    } catch (e) { handleError(res, e); }
-  });
-
-  router.delete('/v1/models/:model_id', async (req, res) => {
-    try {
-      const account = authenticate(req);
-      requireRole(account, 'provider');
-      ok(res, deleteModel(account.account_id, req.params.model_id));
-    } catch (e) { handleError(res, e); }
-  });
-
-  // Inference
-  router.post('/v1/chat/completions', async (req, res) => {
-    try {
-      enforceRateLimit(req, '/v1/chat/completions');
-      const account = authenticate(req);
-      requireAuth(account);
-      const body = await readBody(req);
-
-      if (body.stream) {
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        });
-        for await (const chunk of chatCompletionStream(account, body)) {
-          res.write(chunk);
-        }
-        res.end();
-      } else {
-        ok(res, chatCompletionSync(account, body));
-      }
-    } catch (e) { handleError(res, e); }
-  });
-
-  // Usage
-  router.get('/v1/usage', async (req, res) => {
-    try {
-      const account = authenticate(req);
-      requireAuth(account);
-      const url = new URL(req.url, 'http://x');
-      ok(res, queryUsage(account, { from: url.searchParams.get('from'), to: url.searchParams.get('to') }));
-    } catch (e) { handleError(res, e); }
-  });
-
-  router.get('/v1/usage/summary', async (req, res) => {
-    try {
-      const account = authenticate(req);
-      requireAuth(account);
-      const url = new URL(req.url, 'http://x');
-      ok(res, usageSummary(account, { from: url.searchParams.get('from'), to: url.searchParams.get('to') }));
-    } catch (e) { handleError(res, e); }
-  });
-
-  // Stats
-  router.get('/v1/stats', async (req, res) => {
-    try { ok(res, getStats()); } catch (e) { handleError(res, e); }
-  });
-
-  router.get('/v1/leaderboard', async (req, res) => {
-    try {
-      ok(res, getLeaderboard());
-    } catch (e) { handleError(res, e); }
-  });
-
-  // Provider pilot waitlist (public — interest + inventory only)
-  router.post('/v1/provider-pilot', async (req, res) => {
-    try {
-      enforceRateLimit(req, '/v1/provider-pilot');
-      const body = await readBody(req);
-      created(res, await submitProviderPilot(body));
-    } catch (e) { handleError(res, e); }
-  });
-
-  router.get('/v1/provider-pilot', async (req, res) => {
-    try {
-      ok(res, providerPilotSummary());
-    } catch (e) { handleError(res, e); }
-  });
-
   router.post('/v1/contact', async (req, res) => {
     try {
       enforceRateLimit(req, '/v1/contact');
@@ -494,7 +378,6 @@ export function createMarketplaceServer() {
     if (pathname === '/api/config') {
       return ok(res, {
         betaMessage: betaBannerText(),
-        simulated: true,
         paymentsEnabled: false,
         canonicalDomain: process.env.CANONICAL_DOMAIN || 'neocloudsmarketplace.com',
         persistenceEnabled: isPersistenceEnabled(),
@@ -503,7 +386,6 @@ export function createMarketplaceServer() {
         reservationExpiry: true,
         agentHeartbeatTtlMs: HEARTBEAT_TTL_MS,
         liveHardwareConnect: true,
-        ...demoSeedConfig(),
       });
     }
 
@@ -522,31 +404,6 @@ export function createMarketplaceServer() {
     }
     if (pathname === '/console.html' || pathname === '/console') {
       return serveStatic(res, join(PUBLIC_DIR, 'console.html'), 'text/html; charset=utf-8');
-    }
-    if (
-      pathname === '/linkedin-executive-article.html'
-      || pathname === '/linkedin-article.html'
-      || pathname === '/linkedin-article'
-    ) {
-      return serveStatic(res, join(PUBLIC_DIR, 'linkedin-executive-article.html'), 'text/html; charset=utf-8');
-    }
-    if (pathname === '/linkedin-executive-article.pdf' || pathname === '/linkedin-article.pdf') {
-      return serveStatic(res, join(PUBLIC_DIR, 'linkedin-executive-article.pdf'), 'application/pdf');
-    }
-    if (pathname === '/system-design.html' || pathname === '/system-design') {
-      return serveStatic(res, join(PUBLIC_DIR, 'system-design.html'), 'text/html; charset=utf-8');
-    }
-    if (pathname === '/system-design.pdf') {
-      return serveStatic(res, join(PUBLIC_DIR, 'system-design.pdf'), 'application/pdf');
-    }
-    if (pathname === '/SYSTEM_DESIGN.md' || pathname === '/system-design.md') {
-      return serveStatic(res, join(PUBLIC_DIR, '..', 'SYSTEM_DESIGN.md'), 'text/markdown; charset=utf-8');
-    }
-    if (pathname === '/HARDWARE.md' || pathname === '/hardware.html') {
-      return serveStatic(res, join(PUBLIC_DIR, '..', 'HARDWARE.md'), 'text/markdown; charset=utf-8');
-    }
-    if (pathname === '/providers.html' || pathname === '/provider-pilot.html') {
-      return serveStatic(res, join(PUBLIC_DIR, 'providers.html'), 'text/html; charset=utf-8');
     }
     if (pathname === '/admin.html' || pathname === '/admin') {
       return serveStatic(res, join(PUBLIC_DIR, 'admin.html'), 'text/html; charset=utf-8');

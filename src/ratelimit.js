@@ -9,8 +9,6 @@ const RULES = {
   '/v1/auth/register': { limit: 8, windowMs: 60 * 60 * 1000 },
   '/v1/auth/recover': { limit: 5, windowMs: 60 * 60 * 1000 },
   '/v1/contact': { limit: 8, windowMs: 60 * 60 * 1000 },
-  '/v1/provider-pilot': { limit: 8, windowMs: 60 * 60 * 1000 },
-  '/v1/chat/completions': { limit: 60, windowMs: 60 * 1000 },
 };
 
 export function rateLimitEnabled() {
