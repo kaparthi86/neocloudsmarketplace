@@ -136,7 +136,7 @@
 </head>
 <body>
 
-<div class="honesty-banner" id="beta-banner">A listing is available only while the provider agent is online. Reservations do not charge you — no payments collected.</div>
+<div class="honesty-banner" id="beta-banner">Live listings are available only while the provider agent is online. Simulated rows are examples and do not open a machine. Reservations do not charge you — no payments collected.</div>
 
 <nav class="site-nav">
   <a class="logo" href="/">☁ Neo Clouds</a>
@@ -152,6 +152,7 @@
   <div class="app-subnav" id="app-subnav">
     <a href="#listings" class="active">Listings</a>
     <a href="#reservations">My reservations</a>
+    <a href="#models">Models</a>
   </div>
 </nav>
 
@@ -159,7 +160,7 @@
 <div id="page-listings" class="page active">
   <div class="hero">
     <h1>GPU &amp; TPU Marketplace</h1>
-    <p>Browse GPUs and TPUs that a provider agent is keeping online. You will not be charged.</p>
+    <p>Live machines appear first, while a provider agent is online. Simulated rows are examples: you can reserve them, and no machine is opened. Nothing is charged.</p>
   </div>
   <main>
     <div class="key-setup" id="key-setup-section">
@@ -212,6 +213,14 @@
   </main>
 </div>
 
+<div id="page-models" class="page">
+  <main>
+    <h2 style="margin-bottom:8px">Example models</h2>
+    <p class="notice">These models sit on the simulated machines. Preview returns a canned reply. Nothing is billed and no accelerator runs the request.</p>
+    <div class="card-grid" id="models-grid"></div>
+  </main>
+</div>
+
 <!-- Register modal -->
 <div class="modal-overlay hidden" id="register-modal">
   <div class="modal">
@@ -256,6 +265,21 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="preview-modal">
+  <div class="modal" style="width:min(600px,95vw)">
+    <h2 id="preview-model-name" style="font-size:1rem;margin-bottom:8px"></h2>
+    <p class="notice">Canned example. No GPU or TPU runs this, and nothing is billed.</p>
+    <div class="chat-panel" id="preview-panel"></div>
+    <div class="chat-input-row">
+      <input type="text" id="preview-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendPreview()">
+      <button class="btn btn-gold btn-sm" onclick="sendPreview()">Preview</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('preview-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ---------------------------------------------------------------------------
 // State
@@ -283,7 +307,8 @@ validateStoredKey();
 // ---------------------------------------------------------------------------
 // Routing
 // ---------------------------------------------------------------------------
-const pages = { listings: 'page-listings', reservations: 'page-reservations' };
+const pages = { listings: 'page-listings', reservations: 'page-reservations', models: 'page-models' };
+let previewModel = '';
 let reservationPoll = null;
 
 function navigate(hash) {
@@ -296,6 +321,7 @@ function navigate(hash) {
   });
   if (page === 'listings') loadListings();
   else if (page === 'reservations') loadReservations();
+  else if (page === 'models') loadModels();
 }
 
 window.addEventListener('hashchange', () => navigate(location.hash));
@@ -629,6 +655,59 @@ async function loadReservations() {
     }</tbody></table>`;
   } catch (e) {
     box.innerHTML = `<p style="color:var(--red)">${esc(e.message)}</p>`;
+  }
+}
+
+async function loadModels() {
+  const grid = document.getElementById('models-grid');
+  grid.innerHTML = '<p style="color:var(--muted)">Loading…</p>';
+  try {
+    const data = await publicApi('/models');
+    grid.innerHTML = '';
+    data.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div class="gpu-model" style="font-size:1rem">${esc(m.model_name)}</div>
+        <div class="meta">${esc(m.model_family)} · ${(m.context_length || 0).toLocaleString()} tokens · ${esc(m.accelerator_model)}</div>
+        <div class="badges" style="margin-top:8px"><span class="badge badge-sim">SIMULATED</span></div>
+        <div class="meta">Input (listed): <strong style="color:var(--gold)">$${esc(m.input_price_per_1k_tokens)}/1K</strong></div>
+        <div class="meta">Output (listed): <strong style="color:var(--gold)">$${esc(m.output_price_per_1k_tokens)}/1K</strong></div>
+        <div class="meta">Not billed</div>
+        <div style="margin-top:14px">
+          <button class="btn btn-gold btn-sm" onclick="openPreview('${m.model_id}','${esc(m.model_name)}')">Preview</button>
+        </div>`;
+      grid.appendChild(div);
+    });
+  } catch (e) {
+    grid.innerHTML = `<p style="color:var(--red)">${esc(e.message)}</p>`;
+  }
+}
+
+function openPreview(modelId, modelName) {
+  previewModel = modelId;
+  document.getElementById('preview-model-name').textContent = modelName;
+  document.getElementById('preview-panel').textContent = '';
+  document.getElementById('preview-modal').classList.remove('hidden');
+}
+
+async function sendPreview() {
+  const input = document.getElementById('preview-input');
+  const panel = document.getElementById('preview-panel');
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (!API_KEY) {
+    closeModal('preview-modal');
+    promptForCustomerKey('Create a free customer API key to preview a model. Nothing is billed.');
+    return;
+  }
+  input.value = '';
+  panel.textContent = 'You: ' + msg + '\n';
+  try {
+    const data = await api('POST', '/models/preview', { model: previewModel, messages: [{ role: 'user', content: msg }] });
+    panel.textContent += 'Example: ' + (data.choices?.[0]?.message?.content || '');
+  } catch (e) {
+    panel.textContent += e.message;
   }
 }
 
