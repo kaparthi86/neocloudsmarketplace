@@ -32,6 +32,7 @@ npm start
 - GPU listings, reservations, provider nodes + attestation
 - **Live hardware connect:** neo-agent heartbeat, challenge attest, provision ack — see [HARDWARE.md](./HARDWARE.md)
 - Public browse; API keys for reserve
+- Fixed simulated machines and model previews (H100, A100, TPU). Live agent listings stay above them and are the only ones that open access.
 - Provider console: [/console.html](./public/console.html)
 - SQLite on a persistent disk (`NEO_DB_PATH`)
 - Operator inbox at `/admin` (contact notes, node heartbeats)
@@ -49,6 +50,8 @@ npm start
 | `POST` | `/v1/auth/rotate` | Any key |
 | `GET` | `/v1/admin/overview` | Operator key |
 | `GET` | `/v1/listings` | No |
+| `GET` | `/v1/models` | No |
+| `POST` | `/v1/models/preview` | Any key |
 | `POST` | `/v1/reservations` | Customer key |
 
 ## License

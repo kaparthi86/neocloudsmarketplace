@@ -8,6 +8,7 @@ import { isListingAvailable } from './listings.js';
 import { isLiveNode, isNodeOnline } from './agent.js';
 import { schedulePersist } from './db.js';
 import { expireReservations } from './lifecycle.js';
+import { EXAMPLE_NOTE, findExampleListing } from './examples.js';
 
 export function createReservation(customerId, body) {
   expireReservations();
@@ -15,23 +16,24 @@ export function createReservation(customerId, body) {
   if (!listing_id) throw new Error('listing_id is required');
   if (!Number.isInteger(hours) || hours < 1) throw new Error('hours must be positive integer');
 
-  const listing = store.listings.get(listing_id);
+  const example = findExampleListing(listing_id);
+  const listing = example || store.listings.get(listing_id);
   if (!listing) { const e = new Error('listing not found'); e.status = 404; throw e; }
 
-  if (!isListingAvailable(listing)) {
+  if (!example && !isListingAvailable(listing)) {
     const e = new Error('listing is not available'); e.status = 409; throw e;
   }
   if (hours < listing.min_hours) throw new Error(`hours must be >= min_hours (${listing.min_hours})`);
   if (hours > listing.max_hours) throw new Error(`hours must be <= max_hours (${listing.max_hours})`);
 
-  const node = store.nodes.get(listing.node_id);
+  const node = example ? null : store.nodes.get(listing.node_id);
   const priceScaled = parsePrice(listing.price_per_hour);
   const total = priceScaled * BigInt(hours);
 
   const startsAt = starts_at ? new Date(starts_at) : new Date();
   const endsAt = new Date(startsAt.getTime() + hours * 3600_000);
 
-  const live = isLiveNode(node) && isNodeOnline(node);
+  const live = !example && isLiveNode(node) && isNodeOnline(node);
   const reservation = {
     reservation_id: makeId('res'),
     listing_id,
@@ -56,14 +58,12 @@ export function createReservation(customerId, body) {
           note: 'Live reservation queued. Waiting for provider neo-agent to provision access. No payment collected.',
         }
       : {
-          ssh_host: node?.hostname || null,
-          ssh_port: 22,
-          note: 'Simulated reservation. No real SSH or accelerator is provisioned. You were not charged.',
+          note: EXAMPLE_NOTE,
         },
   };
 
   store.reservations.set(reservation.reservation_id, reservation);
-  listing.reservation_count++;
+  if (!example) listing.reservation_count++;
   schedulePersist();
   return reservation;
 }

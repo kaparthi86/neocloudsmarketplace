@@ -13,7 +13,7 @@ Critical path for onboarding **live providers** and **customers**.
 | **Reserve** | Live → `pending_provision` until agent acks SSH/connection info |
 | **Provider console** | `/console.html` |
 
-Demo/SEED nodes stay `live: false` and remain simulated.
+Fixed example listings (`ex_lst_h100`, `ex_lst_a100`, `ex_lst_tpu`) are simulated constants. Reserving one saves a note and does not open SSH. Live nodes are the only path that hands over access.
 
 ## Provider onboarding (live)
 
@@ -76,4 +76,4 @@ curl -s -X POST "$API/v1/agent/heartbeat" -H "Authorization: Bearer $NKP" -H 'Co
 
 Attestation **requires** the agent proof. Heartbeats are accepted only for nodes registered with `live: true`. Reservations expire on their own: active holds complete at `ends_at`, and `pending_provision` cancels if the agent does not ack within `RESERVATION_PROVISION_TIMEOUT_MS` (default 15 minutes).
 
-Payments remain **disabled**. There is no canned chat or seeded catalog. A listing is real only when neo-agent is attested and heartbeating.
+Payments remain **disabled**. Example machines and model previews are labeled simulated and do not run a GPU or TPU. A listing is real only when neo-agent is attested and heartbeating.

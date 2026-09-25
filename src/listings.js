@@ -6,6 +6,7 @@ import { store, makeId, parsePrice, formatPrice } from './store.js';
 import { schedulePersist } from './db.js';
 import { isLiveNode, isNodeOnline } from './agent.js';
 import { expireReservations } from './lifecycle.js';
+import { EXAMPLE_LISTINGS, findExampleListing } from './examples.js';
 
 function validateListing(body) {
   const { node_id, price_per_hour } = body;
@@ -69,10 +70,7 @@ export function createListing(providerId, body) {
   };
 }
 
-export function listListings(filters = {}) {
-  expireReservations();
-  let results = [...store.listings.values()];
-
+function applyFilters(results, filters) {
   if (filters.accelerator_type) {
     results = results.filter(l => (l.accelerator_type || 'gpu') === String(filters.accelerator_type).toLowerCase());
   }
@@ -90,12 +88,40 @@ export function listListings(filters = {}) {
     const wantTags = filters.tags.split(',').map(t => t.trim());
     results = results.filter(l => wantTags.every(t => l.tags.includes(t)));
   }
-
-  // Workload is a first-class alias for a single catalog tag (training / inference / fine-tune)
   if (filters.workload) {
     const workload = String(filters.workload).toLowerCase();
     results = results.filter(l => Array.isArray(l.tags) && l.tags.includes(workload));
   }
+  return results;
+}
+
+function sortListings(rows, sort) {
+  const copy = [...rows];
+  if (sort === 'price_asc') {
+    copy.sort((a, b) => {
+      const pa = parsePrice(a.price_per_hour);
+      const pb = parsePrice(b.price_per_hour);
+      return pa < pb ? -1 : pa > pb ? 1 : 0;
+    });
+  } else if (sort === 'price_desc') {
+    copy.sort((a, b) => {
+      const pa = parsePrice(a.price_per_hour);
+      const pb = parsePrice(b.price_per_hour);
+      return pa > pb ? -1 : pa < pb ? 1 : 0;
+    });
+  } else if (sort === 'hardware') {
+    copy.sort((a, b) => String(a.gpu_model || '').localeCompare(String(b.gpu_model || '')));
+  }
+  const real = copy.filter(l => !l.example);
+  const examples = copy.filter(l => l.example);
+  return [...real, ...examples];
+}
+
+export function listListings(filters = {}) {
+  expireReservations();
+  let results = [...store.listings.values()];
+
+  results = applyFilters(results, filters);
 
   let withAvail = results.map(l => {
     const node = store.nodes.get(l.node_id);
@@ -108,33 +134,19 @@ export function listListings(filters = {}) {
     };
   });
 
+  const examples = applyFilters(EXAMPLE_LISTINGS, filters).map(l => ({ ...l }));
   if (filters.available !== undefined) {
     const want = filters.available === 'true' || filters.available === true;
     withAvail = withAvail.filter(l => l.available === want);
+    if (!want) return sortListings(withAvail, String(filters.sort || '').toLowerCase());
   }
-
-  const sort = String(filters.sort || '').toLowerCase();
-  if (sort === 'price_asc') {
-    withAvail.sort((a, b) => {
-      const pa = parsePrice(a.price_per_hour);
-      const pb = parsePrice(b.price_per_hour);
-      return pa < pb ? -1 : pa > pb ? 1 : 0;
-    });
-  } else if (sort === 'price_desc') {
-    withAvail.sort((a, b) => {
-      const pa = parsePrice(a.price_per_hour);
-      const pb = parsePrice(b.price_per_hour);
-      return pa > pb ? -1 : pa < pb ? 1 : 0;
-    });
-  } else if (sort === 'hardware') {
-    withAvail.sort((a, b) => String(a.gpu_model || '').localeCompare(String(b.gpu_model || '')));
-  }
-
-  return withAvail;
+  return sortListings([...withAvail, ...examples], String(filters.sort || '').toLowerCase());
 }
 
 export function getListing(listingId) {
   expireReservations();
+  const example = findExampleListing(listingId);
+  if (example) return { ...example };
   const listing = store.listings.get(listingId);
   if (!listing) { const e = new Error('listing not found'); e.status = 404; throw e; }
   listing.view_count++;

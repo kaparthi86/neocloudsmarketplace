@@ -222,9 +222,12 @@ describe('3 – Listings', async () => {
 
     const sorted = await req(server, 'GET', '/v1/listings?sort=price_asc', undefined, customerKey);
     assert.equal(sorted.status, 200);
-    assert.ok(sorted.body.length >= 2);
-    for (let i = 1; i < sorted.body.length; i++) {
-      assert.ok(Number(sorted.body[i - 1].price_per_hour) <= Number(sorted.body[i].price_per_hour));
+    const real = sorted.body.filter(l => !l.example);
+    const examples = sorted.body.filter(l => l.example);
+    assert.ok(real.length >= 2);
+    assert.deepEqual(sorted.body, [...real, ...examples]);
+    for (let i = 1; i < real.length; i++) {
+      assert.ok(Number(real[i - 1].price_per_hour) <= Number(real[i].price_per_hour));
     }
 
     const capped = await req(server, 'GET', '/v1/listings?max_price_per_hour=2.00&sort=price_desc', undefined, customerKey);
@@ -478,6 +481,40 @@ describe('7 – Launch readiness', async () => {
     const r = await req(server, 'GET', '/v1/listings');
     assert.equal(r.status, 200);
     assert.ok(Array.isArray(r.body));
+  });
+
+  it('shows simulated machines and model previews without opening access', async () => {
+    const listings = await req(server, 'GET', '/v1/listings');
+    const ids = listings.body.filter(l => l.example).map(l => l.listing_id);
+    assert.deepEqual(ids, ['ex_lst_h100', 'ex_lst_a100', 'ex_lst_tpu']);
+    assert.ok(listings.body.filter(l => l.example).every(l => l.simulated === true && l.live === false));
+
+    const c = await req(server, 'POST', '/v1/auth/register', {
+      name: 'Ex', email: `ex-${Date.now()}@test.com`, role: 'customer',
+    });
+    const reserved = await req(server, 'POST', '/v1/reservations', {
+      listing_id: 'ex_lst_h100', hours: 1,
+    }, c.body.api_key);
+    assert.equal(reserved.status, 201);
+    assert.equal(reserved.body.simulated, true);
+    assert.equal(reserved.body.status, 'active');
+    assert.equal(reserved.body.connection_info.ssh_host, undefined);
+    assert.match(reserved.body.connection_info.note, /no machine was opened/i);
+
+    const still = await req(server, 'GET', '/v1/listings/ex_lst_h100');
+    assert.equal(still.body.available, true);
+
+    const models = await req(server, 'GET', '/v1/models');
+    assert.equal(models.status, 200);
+    assert.ok(models.body.some(m => m.model_id === 'ex_mdl_llama70'));
+    const preview = await req(server, 'POST', '/v1/models/preview', {
+      model: 'ex_mdl_llama70',
+      messages: [{ role: 'user', content: 'Hello' }],
+    }, c.body.api_key);
+    assert.equal(preview.status, 200);
+    assert.equal(preview.body.payment_collected, false);
+    assert.match(preview.body.choices[0].message.content, /canned example/i);
+    assert.equal(preview.body.usage, undefined);
   });
 
 });

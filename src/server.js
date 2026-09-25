@@ -26,6 +26,7 @@ import { enforceRateLimit } from './ratelimit.js';
 import { isMailConfigured, sendAccountKeyEmail } from './mail.js';
 import { adminOverview } from './admin.js';
 import { expireReservations } from './lifecycle.js';
+import { EXAMPLE_MODELS, previewExampleModel } from './examples.js';
 
 const MAX_BODY_BYTES = 64 * 1024;
 
@@ -294,6 +295,21 @@ export function buildRouter() {
       const account = authenticate(req);
       requireRole(account, 'provider');
       ok(res, completeReservation(account.account_id, req.params.reservation_id));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.get('/v1/models', async (req, res) => {
+    try { ok(res, EXAMPLE_MODELS); } catch (e) { handleError(res, e); }
+  });
+
+  router.post('/v1/models/preview', async (req, res) => {
+    try {
+      enforceRateLimit(req, '/v1/models/preview');
+      const account = authenticate(req);
+      requireAuth(account);
+      const body = await readBody(req);
+      if (!body.model) throw new Error('model is required');
+      ok(res, previewExampleModel(body.model));
     } catch (e) { handleError(res, e); }
   });
 
