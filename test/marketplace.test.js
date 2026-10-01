@@ -379,7 +379,10 @@ describe('7 – HTTP integration', async () => {
     assert.match(await about.text(), /About Neo Clouds/i);
     const contact = await fetch(`${base(server)}/contact.html`);
     assert.equal(contact.status, 200);
-    assert.match(await contact.text(), /Contact/i);
+    const contactHtml = await contact.text();
+    assert.match(contactHtml, /Contact/i);
+    assert.match(contactHtml, /investorsneoclouds@googlegroups.com/);
+    assert.match(contactHtml, /value="investor"/);
   });
 
   it('POST /v1/contact accepts inbound messages', async () => {
@@ -394,6 +397,14 @@ describe('7 – HTTP integration', async () => {
     assert.ok(r.body.contact_id);
     const after = await req(server, 'GET', '/v1/contact');
     assert.equal(after.body.count, before.body.count + 1);
+    const investor = await req(server, 'POST', '/v1/contact', {
+      intent: 'investor',
+      name: 'Ira',
+      email: `ira-${Date.now()}@example.com`,
+      message: 'Investor introduction.',
+    });
+    assert.equal(investor.status, 201);
+    assert.equal(investor.body.emailed, false);
   });
 
   it('unknown route returns 404 JSON', async () => {

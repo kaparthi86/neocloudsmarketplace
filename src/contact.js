@@ -4,9 +4,9 @@
 
 import { store, makeId } from './store.js';
 import { schedulePersist } from './db.js';
-import { inboundSavedMessage, notifyOperator } from './mail.js';
+import { inboundSavedMessage, investorEmail, notifyOperator } from './mail.js';
 
-const VALID_INTENTS = ['provider', 'customer', 'other'];
+const VALID_INTENTS = ['provider', 'customer', 'investor', 'other'];
 
 function requireString(value, field, { max = 200 } = {}) {
   if (!value || typeof value !== 'string' || !value.trim()) {
@@ -36,6 +36,7 @@ export async function submitContact(body = {}) {
   const mailed = await notifyOperator({
     subject: `Neo Clouds contact ${entry.contact_id}`,
     text: `${entry.name} <${entry.email}> (${entry.intent})\n\n${entry.message}`,
+    to: intent === 'investor' ? investorEmail() : undefined,
   });
   entry.emailed = mailed.sent === true;
   store.contactMessages.push(entry);

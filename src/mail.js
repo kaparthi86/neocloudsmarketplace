@@ -38,10 +38,16 @@ export async function sendMail({ to, subject, text }) {
   return { sent: false, reason: 'mail_not_configured' };
 }
 
-export async function notifyOperator({ subject, text }) {
+export const DEFAULT_INVESTOR_EMAIL = 'investorsneoclouds@googlegroups.com';
+
+export function investorEmail() {
+  return process.env.NEO_INVESTOR_EMAIL || DEFAULT_INVESTOR_EMAIL;
+}
+
+export async function notifyOperator({ subject, text, to }) {
   if (!isMailConfigured()) return { sent: false, reason: 'mail_not_configured' };
-  const to = process.env.NEO_OPERATOR_EMAIL || process.env.NEO_MAIL_FROM || 'operator@localhost';
-  return sendMail({ to, subject, text });
+  const dest = to || process.env.NEO_OPERATOR_EMAIL || process.env.NEO_MAIL_FROM || 'operator@localhost';
+  return sendMail({ to: dest, subject, text });
 }
 
 export function inboundSavedMessage(emailed) {
