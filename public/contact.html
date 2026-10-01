@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Contact Neo Clouds — providers with spare GPUs/TPUs and teams who need low-cost accelerator access.">
+<meta name="description" content="Contact Neo Clouds — providers, customers, and investors.">
 <meta name="theme-color" content="#0d1117">
 <link rel="canonical" href="https://neocloudsmarketplace.com/contact.html">
 <link rel="stylesheet" href="/site.css">
@@ -18,12 +18,20 @@
     margin-bottom: 14px;
   }
   .lede { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; max-width: 48ch; }
+  .contact-list { list-style: none; padding: 0; margin: 0 0 28px; }
+  .contact-list li { margin: 0 0 12px; }
+  .contact-label {
+    display: block;
+    font-size: 0.75rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
   .contact-email {
-    display: inline-block;
     color: var(--gold);
     font-weight: 600;
     text-decoration: none;
-    margin-bottom: 28px;
   }
   .form-card {
     background: var(--surface);
@@ -65,8 +73,17 @@
 
 <main class="page-wrap">
   <h1>Contact</h1>
-  <p class="lede">Providers with spare GPUs/TPUs, or teams exploring low-cost accelerator access — say hello.</p>
-  <a class="contact-email" href="mailto:hellonecoloudsmarketplace@googlegroups.com">hellonecoloudsmarketplace@googlegroups.com</a>
+  <p class="lede">Providers with spare GPUs or TPUs, teams looking for compute, and investors.</p>
+  <ul class="contact-list">
+    <li>
+      <span class="contact-label">General</span>
+      <a class="contact-email" href="mailto:hellonecoloudsmarketplace@googlegroups.com">hellonecoloudsmarketplace@googlegroups.com</a>
+    </li>
+    <li>
+      <span class="contact-label">Investors</span>
+      <a class="contact-email" href="mailto:investorsneoclouds@googlegroups.com">investorsneoclouds@googlegroups.com</a>
+    </li>
+  </ul>
 
   <div class="form-card">
     <form id="contact-form" onsubmit="return submitContact(event)">
@@ -75,6 +92,7 @@
         <select id="intent" name="intent" required>
           <option value="provider">a provider with spare hardware</option>
           <option value="customer">looking for compute</option>
+          <option value="investor">an investor</option>
           <option value="other">something else</option>
         </select>
       </div>
@@ -91,7 +109,7 @@
         <textarea id="message" name="message" required maxlength="4000" placeholder="Tell us briefly what you have or need…"></textarea>
       </div>
       <button type="submit" class="btn btn-gold">Send message</button>
-      <p class="hint">This is saved in the operator inbox. When email delivery is configured, the operator is emailed too. It does not create a live reservation or enable payouts.</p>
+      <p class="hint">This is saved in the operator inbox. When email delivery is configured, general notes go to the operator and investor notes go to investorsneoclouds@googlegroups.com. It does not create a live reservation or enable payouts.</p>
       <p id="form-status" class="status" role="status" aria-live="polite"></p>
     </form>
   </div>
@@ -138,7 +156,7 @@ async function submitContact(event) {
     form.reset();
   } catch (e) {
     status.className = 'status err';
-    status.textContent = e.message || 'Could not send — email hellonecoloudsmarketplace@googlegroups.com';
+    status.textContent = e.message || 'Could not send. Email hellonecoloudsmarketplace@googlegroups.com or investorsneoclouds@googlegroups.com';
   }
   return false;
 }

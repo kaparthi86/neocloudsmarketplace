@@ -83,7 +83,8 @@ Environment (defaults in `render.yaml`):
 | `BETA_TESTING` | `0` |
 | `NEO_DB_PATH` | `/var/data/neo-clouds.sqlite` |
 | `ADMIN_API_KEY` | set in the dashboard (operator inbox) |
-| `NEO_OPERATOR_EMAIL` | inbox that should receive contact and waitlist mail |
+| `NEO_OPERATOR_EMAIL` | inbox that should receive contact mail |
+| `NEO_INVESTOR_EMAIL` | `investorsneoclouds@googlegroups.com` for investor notes |
 | `RESEND_API_KEY` + `NEO_MAIL_FROM` | or `NEO_MAIL_WEBHOOK_URL` instead |
 
 The homepage always shows that nothing is charged. Optional `BETA_MESSAGE` overrides that wording. Do not add Stripe or checkout until you decide to bill.

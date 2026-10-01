@@ -35,5 +35,7 @@ services:
         sync: false
       - key: NEO_OPERATOR_EMAIL
         sync: false
+      - key: NEO_INVESTOR_EMAIL
+        value: investorsneoclouds@googlegroups.com
       - key: NEO_MAIL_WEBHOOK_URL
         sync: false
