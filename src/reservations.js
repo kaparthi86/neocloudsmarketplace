@@ -9,6 +9,7 @@ import { isLiveNode, isNodeOnline } from './agent.js';
 import { schedulePersist } from './db.js';
 import { expireReservations } from './lifecycle.js';
 import { EXAMPLE_NOTE, findExampleListing } from './examples.js';
+import { mailReservationEvent } from './reservation-mail.js';
 
 export function createReservation(customerId, body) {
   expireReservations();
@@ -99,10 +100,12 @@ export function cancelReservation(account, reservationId, reason) {
   if (r.status === 'completed') { const e = new Error('cannot cancel completed reservation'); e.status = 409; throw e; }
   if (r.status === 'cancelled') { const e = new Error('already cancelled'); e.status = 409; throw e; }
 
+  const live = r.simulated === false;
   r.status = 'cancelled';
   r.cancelled_at = new Date().toISOString();
   r.cancellation_reason = reason || null;
   schedulePersist();
+  if (live) mailReservationEvent(r, 'cancelled');
   return r;
 }
 
