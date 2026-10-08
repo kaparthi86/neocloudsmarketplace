@@ -445,8 +445,8 @@ export function createMarketplaceServer() {
     if (pathname === '/site.css') {
       return serveStatic(res, join(PUBLIC_DIR, 'site.css'), 'text/css; charset=utf-8');
     }
-    if (pathname === '/hero-racks.jpg') {
-      return serveStatic(res, join(PUBLIC_DIR, 'hero-racks.jpg'), 'image/jpeg');
+    if (pathname === '/hero-color.jpg') {
+      return serveStatic(res, join(PUBLIC_DIR, 'hero-color.jpg'), 'image/jpeg');
     }
     if (pathname === '/manifest.webmanifest') {
       return serveStatic(res, join(PUBLIC_DIR, 'manifest.webmanifest'), 'application/manifest+json');
