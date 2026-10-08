@@ -648,9 +648,12 @@ async function loadReservations() {
         const info = r.connection_info || {};
         let access = esc(info.note || '');
         if (r.status === 'active' && r.simulated === false && info.ssh_host) {
-          access = `${esc(info.ssh_user || 'neo')}@${esc(info.ssh_host)}:${esc(info.ssh_port || 22)} token ${esc(info.access_token || '')}`;
+          const key = info.ssh_private_key
+            ? `<pre style="white-space:pre-wrap;margin:8px 0 0">${esc(info.ssh_private_key)}</pre>`
+            : '';
+          access = `${esc(info.ssh_user || '')}@${esc(info.ssh_host)}:${esc(info.ssh_port || 22)}${key}`;
         }
-        return `<tr><td>${esc(r.reservation_id)}</td><td>${esc(r.status)}${r.simulated ? ' · demo' : ' · live'}</td><td>${esc(r.ends_at || '')}</td><td>${access}</td></tr>`;
+        return `<tr><td>${esc(r.reservation_id)}</td><td>${esc(reservationState(r))}</td><td>${esc(r.ends_at || '')}</td><td>${access}</td></tr>`;
       }).join('')
     }</tbody></table>`;
   } catch (e) {
@@ -755,6 +758,16 @@ async function rotateKey() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+function reservationState(r) {
+  if (r.status === 'pending_provision') return 'Waiting on the agent';
+  if (r.status === 'active' && r.simulated === false) return 'Access ready';
+  if (r.status === 'completed' || r.status === 'cancelled') {
+    return r.cancellation_reason ? `Ended · ${r.cancellation_reason}` : 'Ended';
+  }
+  if (r.simulated) return 'Demo';
+  return r.status || '';
+}
+
 function esc(s) {
   if (s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

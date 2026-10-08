@@ -5,6 +5,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { store, makeId } from './store.js';
 import { schedulePersist } from './db.js';
+import { mailReservationEvent } from './reservation-mail.js';
 
 export const HEARTBEAT_TTL_MS = Number(process.env.AGENT_HEARTBEAT_TTL_MS || 90_000);
 
@@ -180,17 +181,56 @@ export function ackProvision(providerId, reservationId, body = {}) {
   const ssh_port = Number(body.ssh_port || 22);
   const ssh_user = body.ssh_user || 'neo';
   if (!ssh_host) throw new Error('ssh_host is required');
+  let ssh_private_key = null;
+  if (body.ssh_private_key != null) {
+    if (typeof body.ssh_private_key !== 'string' || body.ssh_private_key.length > 16000) {
+      throw new Error('ssh_private_key must be a key string');
+    }
+    ssh_private_key = body.ssh_private_key;
+  }
 
   r.status = 'active';
   r.simulated = false;
   r.provisioned_at = new Date().toISOString();
+  r.access_revoked_at = null;
   r.connection_info = {
     ssh_host,
     ssh_port,
     ssh_user,
     access_token: body.access_token || makeId('tok'),
-    note: body.note || 'Live provision from provider agent. No payment collected yet.',
+    ...(ssh_private_key ? { ssh_private_key } : {}),
+    note: body.note || 'Live provision from provider agent. The SSH user is removed when the reservation ends. No payment collected yet.',
   };
   schedulePersist();
+  mailReservationEvent(r, 'access_ready');
   return r;
+}
+
+export function listAccessReleases(providerId, nodeId) {
+  requireNode(providerId, nodeId);
+  return [...store.reservations.values()]
+    .filter(r => r.node_id === nodeId
+      && r.provisioned_at
+      && !r.access_revoked_at
+      && (r.status === 'cancelled' || r.status === 'completed'))
+    .map(r => ({
+      reservation_id: r.reservation_id,
+      status: r.status,
+      ssh_user: r.connection_info?.ssh_user || null,
+    }));
+}
+
+export function markAccessRevoked(providerId, reservationId) {
+  const r = store.reservations.get(reservationId);
+  if (!r) { const e = new Error('reservation not found'); e.status = 404; throw e; }
+  if (r.provider_id !== providerId) { const e = new Error('forbidden'); e.status = 403; e.code = 'forbidden'; throw e; }
+  if (!r.provisioned_at) throw new Error('reservation was not provisioned');
+  if (r.status !== 'cancelled' && r.status !== 'completed') {
+    const e = new Error('reservation is still open');
+    e.status = 409;
+    throw e;
+  }
+  r.access_revoked_at = new Date().toISOString();
+  schedulePersist();
+  return { reservation_id: r.reservation_id, access_revoked_at: r.access_revoked_at };
 }

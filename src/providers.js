@@ -67,7 +67,14 @@ export function registerNode(providerId, body) {
 }
 
 export function listNodes(providerId) {
-  return [...store.nodes.values()].filter(n => n.provider_id === providerId);
+  return [...store.nodes.values()]
+    .filter(n => n.provider_id === providerId)
+    .map(n => ({
+      ...n,
+      pending_provisions: [...store.reservations.values()].filter(
+        r => r.node_id === n.node_id && r.status === 'pending_provision',
+      ).length,
+    }));
 }
 
 export function beginAttest(providerId, nodeId) {

@@ -102,7 +102,7 @@
 NEO_API_KEY=nkp_... \
 NEO_NODE_ID=node_... \
 node scripts/neo-agent.mjs</pre>
-    <p class="status">Agent heartbeats, completes challenge attest, and acks customer reservations with SSH connection info.</p>
+    <p class="status">Run this on the host as root, or with passwordless sudo. The agent heartbeats, attests, creates an SSH user for each reservation, and deletes that user when the reservation ends.</p>
   </div>
 
   <div class="panel">
@@ -151,6 +151,13 @@ async function openRegister() {
   alert('Provider key created. Keep it secret.');
 }
 
+function agentCommand(nodeId) {
+  return `NEO_API_BASE=${location.origin} \\
+NEO_API_KEY=${API_KEY} \\
+NEO_NODE_ID=${nodeId} \\
+node scripts/neo-agent.mjs`;
+}
+
 async function api(method, path, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${API_KEY}` } };
   if (body) opts.body = JSON.stringify(body);
@@ -175,11 +182,7 @@ async function registerLiveNode() {
     const node = await api('POST', '/nodes', body);
     document.getElementById('node-status').innerHTML = `<span class="ok">Registered ${node.node_id}</span> — run neo-agent next.`;
     document.getElementById('list-node').value = node.node_id;
-    document.getElementById('agent-cmd').textContent =
-`NEO_API_BASE=${location.origin} \\
-NEO_API_KEY=${API_KEY} \\
-NEO_NODE_ID=${node.node_id} \\
-node scripts/neo-agent.mjs`;
+    document.getElementById('agent-cmd').textContent = agentCommand(node.node_id);
     refreshNodes();
   } catch (e) {
     document.getElementById('node-status').innerHTML = `<span class="err">${e.message}</span>`;
@@ -192,15 +195,18 @@ async function refreshNodes() {
   try {
     const nodes = await api('GET', '/nodes');
     if (!nodes.length) { el.innerHTML = '<p class="status">No nodes yet.</p>'; return; }
-    el.innerHTML = `<table><thead><tr><th>Node</th><th>Model</th><th>Live</th><th>Attest</th><th>Online</th></tr></thead><tbody>${
+    const live = nodes.find(n => n.live) || nodes[0];
+    if (live) document.getElementById('agent-cmd').textContent = agentCommand(live.node_id);
+    el.innerHTML = `<table><thead><tr><th>Node</th><th>Model</th><th>Attest</th><th>Last heartbeat</th><th>Waiting for ack</th></tr></thead><tbody>${
       nodes.map(n => {
-        const online = n.last_heartbeat_at && (Date.now() - new Date(n.last_heartbeat_at).getTime() < 90000);
+        const beat = n.last_heartbeat_at ? String(n.last_heartbeat_at).replace('T', ' ').slice(0, 19) : 'none';
+        const fresh = n.last_heartbeat_at && (Date.now() - new Date(n.last_heartbeat_at).getTime() < 90000);
         return `<tr>
           <td><code>${n.node_id}</code><br><small>${n.hostname} · ${n.region}</small></td>
           <td>${n.gpu_model} × ${n.gpu_count}</td>
-          <td>${n.live ? 'yes' : 'demo'}</td>
           <td class="${n.attestation_status==='attested'?'ok':'warn'}">${n.attestation_status}</td>
-          <td class="${online?'ok':'warn'}">${online?'online':'offline'}</td>
+          <td class="${fresh?'ok':'warn'}">${beat}</td>
+          <td>${n.pending_provisions || 0}</td>
         </tr>`;
       }).join('')
     }</tbody></table>`;

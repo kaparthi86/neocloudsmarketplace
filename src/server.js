@@ -18,7 +18,9 @@ import {
   agentHeartbeat,
   verifyAttestChallenge,
   listPendingProvisions,
+  listAccessReleases,
   ackProvision,
+  markAccessRevoked,
   HEARTBEAT_TTL_MS,
 } from './agent.js';
 import { isPersistenceEnabled } from './db.js';
@@ -360,6 +362,22 @@ export function buildRouter() {
       requireRole(account, 'provider');
       const body = await readBody(req);
       ok(res, ackProvision(account.account_id, req.params.reservation_id, body));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.get('/v1/agent/nodes/:node_id/releases', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireRole(account, 'provider');
+      ok(res, listAccessReleases(account.account_id, req.params.node_id));
+    } catch (e) { handleError(res, e); }
+  });
+
+  router.post('/v1/agent/reservations/:reservation_id/revoke', async (req, res) => {
+    try {
+      const account = authenticate(req);
+      requireRole(account, 'provider');
+      ok(res, markAccessRevoked(account.account_id, req.params.reservation_id));
     } catch (e) { handleError(res, e); }
   });
 

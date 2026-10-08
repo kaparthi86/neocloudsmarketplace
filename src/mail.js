@@ -50,6 +50,13 @@ export async function notifyOperator({ subject, text, to }) {
   return sendMail({ to: dest, subject, text });
 }
 
+export function emailCustomer(to, { subject, text }) {
+  if (!to || !isMailConfigured()) return;
+  sendMail({ to, subject, text }).catch(err => {
+    console.error('customer mail failed:', err.message);
+  });
+}
+
 export function inboundSavedMessage(emailed) {
   if (emailed) {
     return 'Saved in the operator inbox and emailed to the operator. This does not create a live reservation or enable payouts.';
