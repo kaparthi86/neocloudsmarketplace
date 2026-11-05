@@ -227,7 +227,7 @@
     <li><strong>Thin provider integration.</strong> Host-side <code>neo-agent</code> is enough to go live.</li>
     <li><strong>Availability is derived.</strong> Computed from attestation, heartbeat TTL, and reservation conflicts.</li>
     <li><strong>Workload-aware discovery.</strong> Hardware × workload tags × price.</li>
-    <li><strong>Honest early access.</strong> UI/API advertise simulated vs live; no payment collection.</li>
+    <li><strong>Catalog truth.</strong> Simulated examples and live nodes stay distinct.</li>
   </ol>
 
   <h2 id="hl">3. High-level architecture</h2>
@@ -456,7 +456,6 @@ flowchart LR
       <tr><td>Key leakage</td><td>Bearer API keys, rotate, email recovery</td><td>Scoped keys, OAuth</td></tr>
     </tbody>
   </table>
-  <p><strong>Payments:</strong> disabled. Listed prices are discovery signals only.</p>
 
   <h2 id="deploy">11. Deployment</h2>
   <div class="diagram"><pre class="mermaid">

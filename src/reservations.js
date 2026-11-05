@@ -56,7 +56,7 @@ export function createReservation(customerId, body) {
     connection_info: live
       ? {
           status: 'awaiting_agent',
-          note: 'Live reservation queued. Waiting for provider neo-agent to provision access. No payment collected.',
+          note: 'Live reservation queued. Waiting for provider neo-agent to provision access.',
         }
       : {
           note: EXAMPLE_NOTE,

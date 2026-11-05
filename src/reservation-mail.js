@@ -18,7 +18,6 @@ function copyFor(r, event) {
         host && user ? `SSH: ${user}@${host}` : 'Open My reservations to copy the SSH user and key.',
         'The private key is on the reservation page. It is not included in this email.',
         `Reservation: ${id}`,
-        'Payments are not collected.',
       ].join('\n'),
     };
   }
@@ -38,7 +37,6 @@ function copyFor(r, event) {
       lead,
       r.cancellation_reason ? `Reason: ${r.cancellation_reason}` : '',
       `Reservation: ${id}`,
-      'Payments are not collected.',
     ].filter(Boolean).join('\n'),
   };
 }
