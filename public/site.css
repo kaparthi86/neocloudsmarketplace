@@ -27,16 +27,6 @@ body {
   min-height: 100vh;
 }
 
-.honesty-banner {
-  background: rgba(240,180,41,.12);
-  border-bottom: 1px solid var(--gold-dim);
-  color: var(--gold);
-  text-align: center;
-  padding: 10px 16px;
-  font-size: 0.85rem;
-  line-height: 1.45;
-}
-
 .site-nav {
   display: flex;
   align-items: center;

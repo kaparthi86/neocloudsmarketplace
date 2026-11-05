@@ -38,7 +38,7 @@ npm start
 - Operator inbox at `/admin` (contact notes, node heartbeats)
 - API key recovery and rotation
 - Reservation expiry (window end and provision timeout)
-- Privacy, Terms, health check, request log, beta banner
+- Privacy, Terms, health check, request log
 
 ## API
 

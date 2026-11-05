@@ -122,7 +122,6 @@
   .key-setup { background: var(--surface); border: 1px solid var(--gold-dim); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
   .key-setup h3 { color: var(--gold); margin-bottom: 8px; font-size: 0.9rem; }
 
-  .honesty-banner { background: rgba(240,180,41,.12); border-bottom: 1px solid var(--gold-dim); color: var(--gold); text-align: center; padding: 10px 16px; font-size: 0.85rem; line-height: 1.45; }
   .notice { color: var(--muted); font-size: 0.8rem; margin: 0 0 12px; line-height: 1.45; }
 
   footer { text-align: center; padding: 32px 16px 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 40px; }
@@ -135,8 +134,6 @@
 </style>
 </head>
 <body>
-
-<div class="honesty-banner" id="beta-banner">Live listings are available only while the provider agent is online. Simulated rows are examples and do not open a machine. Reservations do not charge you — no payments collected.</div>
 
 <nav class="site-nav">
   <a class="logo" href="/">☁ Neo Clouds</a>
@@ -301,7 +298,6 @@ if (urlParams.get('api_key')) {
 }
 if (API_KEY) document.getElementById('api-key-input').value = API_KEY;
 
-loadSiteConfig();
 validateStoredKey();
 
 // ---------------------------------------------------------------------------
@@ -410,14 +406,6 @@ async function resumePendingAction() {
     document.getElementById('reserve-hours').value = action.hours || 1;
     document.getElementById('reserve-modal').classList.remove('hidden');
   }
-}
-
-async function loadSiteConfig() {
-  try {
-    const cfg = await fetch('/api/config').then(r => r.json());
-    const banner = document.getElementById('beta-banner');
-    if (cfg.betaMessage) banner.textContent = cfg.betaMessage;
-  } catch { /* ignore */ }
 }
 
 function openRegister() {
