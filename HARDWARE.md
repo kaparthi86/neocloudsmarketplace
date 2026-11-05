@@ -39,7 +39,7 @@ node scripts/neo-agent.mjs
 1. `/marketplace` → **Get API Key** as **Customer**  
 2. Browse listings — live nodes show when agent is online  
 3. Reserve → if live, status `pending_provision` then `active` after agent ack  
-4. Use `connection_info` (SSH host, per-reservation user, private key) — **still no payments**
+4. Use `connection_info` (SSH host, per-reservation user, private key)
 
 ## API cheatsheet
 
@@ -76,4 +76,4 @@ curl -s -X POST "$API/v1/agent/heartbeat" -H "Authorization: Bearer $NKP" -H 'Co
 
 Attestation **requires** the agent proof. Heartbeats are accepted only for nodes registered with `live: true`. Reservations expire on their own: active holds complete at `ends_at`, and `pending_provision` cancels if the agent does not ack within `RESERVATION_PROVISION_TIMEOUT_MS` (default 15 minutes).
 
-Payments remain **disabled**. Example machines and model previews are labeled simulated and do not run a GPU or TPU. A listing is real only when neo-agent is attested and heartbeating.
+Example machines and model previews are labeled simulated. A listing is real only when neo-agent is attested and heartbeating.

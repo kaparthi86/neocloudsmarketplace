@@ -59,9 +59,9 @@ export function emailCustomer(to, { subject, text }) {
 
 export function inboundSavedMessage(emailed) {
   if (emailed) {
-    return 'Saved in the operator inbox and emailed to the operator. This does not create a live reservation or enable payouts.';
+    return 'Saved in the operator inbox and emailed to the operator.';
   }
-  return 'Saved in the operator inbox. Email delivery is not configured on this server, so the operator reads it at /admin. This does not create a live reservation or enable payouts.';
+  return 'Saved in the operator inbox. Email delivery is not configured on this server, so the operator reads it at /admin.';
 }
 
 export async function sendAccountKeyEmail(account, reason) {
@@ -73,7 +73,6 @@ export async function sendAccountKeyEmail(account, reason) {
     `Key: ${account.api_key}`,
     '',
     'Save this key. Reservations stay tied to it.',
-    'Payments are not collected.',
   ].join('\n');
   return sendMail({
     to: account.email,

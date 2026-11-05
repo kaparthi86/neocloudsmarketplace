@@ -201,8 +201,8 @@ async function provisionPending(state) {
         ssh_private_key: keys.privateKey,
         access_token: randomBytes(16).toString('hex'),
         note: provisionEnabled()
-          ? 'SSH user created for this reservation only. It is removed when the reservation ends. No payment collected.'
-          : 'NEO_SSH_PROVISION=0, so no host user was created. No payment collected.',
+          ? 'SSH user created for this reservation only. It is removed when the reservation ends.'
+          : 'NEO_SSH_PROVISION=0, so no host user was created.',
       });
       state.open[job.reservation_id] = { username, at: new Date().toISOString() };
       await saveState(state);

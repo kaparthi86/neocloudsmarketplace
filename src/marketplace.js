@@ -32,7 +32,6 @@ try {
     console.log(`Persistence: ${dbInfo.path}`);
     console.log('Live hardware: neo-agent heartbeat + challenge attest + provision ack enabled.');
     console.log('Reservation expiry sweeper running.');
-    console.log('Payments remain disabled.');
   });
   const expiryTimer = setInterval(() => {
     try { expireReservations(); } catch (err) { console.error('expireReservations failed:', err.message); }

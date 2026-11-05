@@ -12,7 +12,7 @@ import { authenticate, requireAuth, requireRole, registerAccount, rotateApiKey, 
 import { registerNode, listNodes, deregisterNode, beginAttest } from './providers.js';
 import { createListing, listListings, getListing, updateListing, deleteListing } from './listings.js';
 import { createReservation, listReservations, getReservation, cancelReservation, completeReservation } from './reservations.js';
-import { healthPayload, betaBannerText } from './health.js';
+import { healthPayload } from './health.js';
 import { submitContact, contactSummary } from './contact.js';
 import {
   agentHeartbeat,
@@ -411,7 +411,6 @@ export function createMarketplaceServer() {
 
     if (pathname === '/api/config') {
       return ok(res, {
-        betaMessage: betaBannerText(),
         paymentsEnabled: false,
         canonicalDomain: process.env.CANONICAL_DOMAIN || 'neocloudsmarketplace.com',
         persistenceEnabled: isPersistenceEnabled(),

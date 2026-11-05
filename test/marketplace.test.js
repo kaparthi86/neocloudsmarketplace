@@ -455,14 +455,12 @@ describe('7 – Launch readiness', async () => {
     assert.equal(r.body.service, 'neo-clouds-marketplace');
     assert.equal(r.body.indexHtmlDeployed, true);
     assert.equal(r.body.paymentsEnabled, false);
-    assert.match(r.body.betaMessage, /payments/i);
   });
 
   it('GET /api/config advertises no payments', async () => {
     const r = await req(server, 'GET', '/api/config');
     assert.equal(r.status, 200);
     assert.equal(r.body.paymentsEnabled, false);
-    assert.match(r.body.betaMessage, /payments/i);
   });
 
   it('registers a TPU node and filters listings by accelerator_type', async () => {

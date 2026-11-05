@@ -122,7 +122,6 @@
   .key-setup { background: var(--surface); border: 1px solid var(--gold-dim); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
   .key-setup h3 { color: var(--gold); margin-bottom: 8px; font-size: 0.9rem; }
 
-  .honesty-banner { background: rgba(240,180,41,.12); border-bottom: 1px solid var(--gold-dim); color: var(--gold); text-align: center; padding: 10px 16px; font-size: 0.85rem; line-height: 1.45; }
   .notice { color: var(--muted); font-size: 0.8rem; margin: 0 0 12px; line-height: 1.45; }
 
   footer { text-align: center; padding: 32px 16px 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 40px; }
@@ -135,8 +134,6 @@
 </style>
 </head>
 <body>
-
-<div class="honesty-banner" id="beta-banner">Live listings are available only while the provider agent is online. Simulated rows are examples and do not open a machine. Reservations do not charge you — no payments collected.</div>
 
 <nav class="site-nav">
   <a class="logo" href="/">☁ Neo Clouds</a>
@@ -160,13 +157,13 @@
 <div id="page-listings" class="page active">
   <div class="hero">
     <h1>GPU &amp; TPU Marketplace</h1>
-    <p>Live machines appear first, while a provider agent is online. Simulated rows are examples: you can reserve them, and no machine is opened. Nothing is charged.</p>
+    <p>Live machines appear first, while a provider agent is online. Simulated rows are examples.</p>
   </div>
   <main>
     <div class="key-setup" id="key-setup-section">
       <div style="flex:1;min-width:240px">
         <h3>Get started</h3>
-        <p style="color:var(--muted);font-size:.8rem;margin-bottom:10px">Browse without a key. Reserve with a free API key. No card required.</p>
+        <p style="color:var(--muted);font-size:.8rem;margin-bottom:10px">Browse without a key. Reserve with a free API key.</p>
         <div class="form-group" style="margin:0">
           <input type="text" id="api-key-input" placeholder="nck_... or nkp_..." style="width:100%;max-width:360px">
         </div>
@@ -208,7 +205,7 @@
 <div id="page-reservations" class="page">
   <main>
     <h2 style="margin-bottom:8px">My reservations</h2>
-    <p class="notice">Live reserves stay here until the provider agent sends connection details. Holds end when the window closes, or sooner if the agent never acks. Nothing is charged.</p>
+    <p class="notice">Live reserves stay here until the provider agent sends connection details. Holds end when the window closes, or sooner if the agent never acks.</p>
     <div id="reservations-list"></div>
   </main>
 </div>
@@ -216,7 +213,7 @@
 <div id="page-models" class="page">
   <main>
     <h2 style="margin-bottom:8px">Example models</h2>
-    <p class="notice">These models sit on the simulated machines. Preview returns a canned reply. Nothing is billed and no accelerator runs the request.</p>
+    <p class="notice">These models sit on the simulated machines. Preview returns a canned reply.</p>
     <div class="card-grid" id="models-grid"></div>
   </main>
 </div>
@@ -225,7 +222,7 @@
 <div class="modal-overlay hidden" id="register-modal">
   <div class="modal">
     <h2>Get a free API key</h2>
-    <p class="notice" id="register-notice">Keys are free. We do not collect a payment method.</p>
+    <p class="notice" id="register-notice">Keys are free.</p>
     <div class="form-group">
       <label>Name</label>
       <input type="text" id="reg-name" placeholder="Your name">
@@ -253,14 +250,14 @@
   <div class="modal">
     <h2 id="reserve-modal-title">Reservation</h2>
     <p id="reserve-info" style="color:var(--muted);font-size:.85rem;margin-bottom:10px"></p>
-    <p class="notice" id="reserve-notice">No payment method is collected. You will not be charged.</p>
+    <p class="notice" id="reserve-notice"></p>
     <div class="form-group">
       <label>Hours (1–720)</label>
       <input type="number" id="reserve-hours" value="1" min="1" max="720">
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('reserve-modal')">Cancel</button>
-      <button class="btn btn-gold" onclick="submitReservation()">Reserve (no charge)</button>
+      <button class="btn btn-gold" onclick="submitReservation()">Reserve</button>
     </div>
   </div>
 </div>
@@ -268,7 +265,7 @@
 <div class="modal-overlay hidden" id="preview-modal">
   <div class="modal" style="width:min(600px,95vw)">
     <h2 id="preview-model-name" style="font-size:1rem;margin-bottom:8px"></h2>
-    <p class="notice">Canned example. No GPU or TPU runs this, and nothing is billed.</p>
+    <p class="notice">Canned example.</p>
     <div class="chat-panel" id="preview-panel"></div>
     <div class="chat-input-row">
       <input type="text" id="preview-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendPreview()">
@@ -291,7 +288,7 @@ let workloadFilter = '';
 let priceSort = 'price_asc';
 let maxPrice = '';
 let pendingAction = null;
-const DEFAULT_REGISTER_NOTICE = 'Keys are free. We do not collect a payment method.';
+const DEFAULT_REGISTER_NOTICE = 'Keys are free.';
 
 // Check ?api_key= param
 const urlParams = new URLSearchParams(location.search);
@@ -301,7 +298,6 @@ if (urlParams.get('api_key')) {
 }
 if (API_KEY) document.getElementById('api-key-input').value = API_KEY;
 
-loadSiteConfig();
 validateStoredKey();
 
 // ---------------------------------------------------------------------------
@@ -381,7 +377,7 @@ function promptForCustomerKey(message) {
 async function ensureCustomerKey(action) {
   if (!API_KEY) {
     pendingAction = action || null;
-    promptForCustomerKey('Create a free customer API key to reserve. No charge.');
+    promptForCustomerKey('Create a free customer API key to reserve.');
     return false;
   }
   try {
@@ -395,7 +391,7 @@ async function ensureCustomerKey(action) {
   } catch (e) {
     if (e.status === 401) clearApiKey();
     pendingAction = action || null;
-    promptForCustomerKey('Your API key is missing or invalid. Get a free customer key to continue (demo, no charge).');
+    promptForCustomerKey('Your API key is missing or invalid. Get a free customer key to continue.');
     return false;
   }
 }
@@ -410,14 +406,6 @@ async function resumePendingAction() {
     document.getElementById('reserve-hours').value = action.hours || 1;
     document.getElementById('reserve-modal').classList.remove('hidden');
   }
-}
-
-async function loadSiteConfig() {
-  try {
-    const cfg = await fetch('/api/config').then(r => r.json());
-    const banner = document.getElementById('beta-banner');
-    if (cfg.betaMessage) banner.textContent = cfg.betaMessage;
-  } catch { /* ignore */ }
 }
 
 function openRegister() {
@@ -551,7 +539,7 @@ function listingCard(l) {
       </div>
       <div style="text-align:right">
         <div class="price">$${esc(l.price_per_hour)}</div>
-        <div class="price-unit">listed /hr · not billed</div>
+        <div class="price-unit">listed /hr</div>
       </div>
     </div>
     <div class="badges">
@@ -578,9 +566,11 @@ async function openReserve(listingId, gpuModel, price, isLive) {
   currentListingId = listingId;
   document.getElementById('reserve-info').textContent = info;
   document.getElementById('reserve-modal-title').textContent = isLive ? 'Live reservation' : 'Simulated reservation';
-  document.getElementById('reserve-notice').textContent = isLive
-    ? 'Live reserve waits for the provider neo-agent to ack access. No payment method is collected.'
-    : 'This does not provision a real GPU or TPU and does not charge you. No payment method is collected.';
+  const reserveNotice = document.getElementById('reserve-notice');
+  reserveNotice.textContent = isLive
+    ? 'Live reserve waits for the provider neo-agent to ack access.'
+    : '';
+  reserveNotice.style.display = isLive ? '' : 'none';
   document.getElementById('reserve-modal').classList.remove('hidden');
 }
 
@@ -600,12 +590,12 @@ async function submitReservation() {
     const r = await api('POST', '/reservations', { listing_id: currentListingId, hours });
     closeModal('reserve-modal');
     if (r.status === 'pending_provision') {
-      toast(`Live reserve queued (${r.reservation_id}). Waiting for provider agent to provision access. No charge.`);
+      toast(`Live reserve queued (${r.reservation_id}). Waiting for provider agent to provision access.`);
     } else if (r.simulated === false && r.status === 'active') {
       const host = r.connection_info?.ssh_host || 'host';
-      toast(`Live reservation active (${r.reservation_id}) → ${host}. No charge.`);
+      toast(`Live reservation active (${r.reservation_id}) → ${host}.`);
     } else {
-      toast(`Simulated reservation saved (${r.reservation_id}). You were not charged.`);
+      toast(`Simulated reservation saved (${r.reservation_id}).`);
     }
     loadListings();
     loadReservations();
@@ -619,7 +609,7 @@ async function submitReservation() {
         info: document.getElementById('reserve-info').textContent,
         hours,
       };
-      promptForCustomerKey('API key missing or invalid. Get a free customer key to reserve (demo, no charge).');
+      promptForCustomerKey('API key missing or invalid. Get a free customer key to reserve.');
       return;
     }
     toast(e.message, true);
@@ -676,7 +666,6 @@ async function loadModels() {
         <div class="badges" style="margin-top:8px"><span class="badge badge-sim">SIMULATED</span></div>
         <div class="meta">Input (listed): <strong style="color:var(--gold)">$${esc(m.input_price_per_1k_tokens)}/1K</strong></div>
         <div class="meta">Output (listed): <strong style="color:var(--gold)">$${esc(m.output_price_per_1k_tokens)}/1K</strong></div>
-        <div class="meta">Not billed</div>
         <div style="margin-top:14px">
           <button class="btn btn-gold btn-sm" onclick="openPreview('${m.model_id}','${esc(m.model_name)}')">Preview</button>
         </div>`;
@@ -778,7 +767,7 @@ function closeModal(id) {
 }
 </script>
 <footer class="site-footer">
-  <p>Neo Clouds Marketplace · No payments collected</p>
+  <p>Neo Clouds Marketplace</p>
   <p>
     <a href="/">Home</a>
     <a href="/console.html">Console</a>

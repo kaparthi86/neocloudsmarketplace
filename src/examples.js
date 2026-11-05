@@ -4,10 +4,10 @@
  */
 
 export const EXAMPLE_NOTE =
-  'Simulated reservation. No machine was opened and nothing was charged.';
+  'Simulated reservation.';
 
 export const PREVIEW_REPLY =
-  'This is a canned example from Neo Clouds. No GPU or TPU ran this request, and nothing was billed.';
+  'This is a canned example from Neo Clouds.';
 
 export const EXAMPLE_LISTINGS = [
   {

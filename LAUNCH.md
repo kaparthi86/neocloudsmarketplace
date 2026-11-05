@@ -87,7 +87,7 @@ Environment (defaults in `render.yaml`):
 | `NEO_INVESTOR_EMAIL` | `investorsneoclouds@googlegroups.com` for investor notes |
 | `RESEND_API_KEY` + `NEO_MAIL_FROM` | or `NEO_MAIL_WEBHOOK_URL` instead |
 
-The homepage always shows that nothing is charged. Optional `BETA_MESSAGE` overrides that wording. Do not add Stripe or checkout until you decide to bill.
+Do not add Stripe or checkout until you decide to bill.
 
 ---
 

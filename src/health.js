@@ -12,18 +12,6 @@ const PUBLIC_DIR = join(__dirname, '..', 'public');
 const indexHtmlPath = join(PUBLIC_DIR, 'index.html');
 const marketplaceHtmlPath = join(PUBLIC_DIR, 'marketplace.html');
 
-export const DEFAULT_HONESTY_BANNER =
-  'Live listings are available only while the provider agent is online. Simulated rows are examples and do not open a machine. Reservations do not charge you — no payments collected.';
-
-/** Always shown. BETA_MESSAGE overrides the wording; BETA_TESTING no longer hides it. */
-export function honestyBannerText() {
-  return process.env.BETA_MESSAGE || DEFAULT_HONESTY_BANNER;
-}
-
-export function betaBannerText() {
-  return honestyBannerText();
-}
-
 export function healthPayload() {
   const prod = process.env.NODE_ENV === 'production';
   const indexHtmlDeployed = existsSync(indexHtmlPath) && existsSync(marketplaceHtmlPath);
@@ -33,7 +21,6 @@ export function healthPayload() {
   const base = {
     ok: true,
     service: 'neo-clouds-marketplace',
-    betaMessage: betaBannerText(),
     paymentsEnabled: false,
     liveHardwareConnect: true,
     liveNodes: liveNodes.length,

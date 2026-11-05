@@ -57,7 +57,7 @@ That last point matters for executives evaluating seriousness. A listing on a we
 
 Early access requires discipline.
 
-Neo Clouds is live as a marketplace surface at [neocloudsmarketplace.com](https://neocloudsmarketplace.com). Demo inventory remains clearly labeled as simulated. Live provider nodes are a distinct path. **Payments are still disabled.** We would rather be precise than overclaim a paid fleet we have not finished wiring.
+Neo Clouds is live as a marketplace surface at [neocloudsmarketplace.com](https://neocloudsmarketplace.com). Demo inventory remains clearly labeled as simulated. Live provider nodes are a distinct path.
 
 That honesty is strategy, not apology. Markets form when participants trust the rules. Overstating readiness destroys the only asset that matters in an early marketplace: credibility.
 

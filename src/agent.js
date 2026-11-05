@@ -199,7 +199,7 @@ export function ackProvision(providerId, reservationId, body = {}) {
     ssh_user,
     access_token: body.access_token || makeId('tok'),
     ...(ssh_private_key ? { ssh_private_key } : {}),
-    note: body.note || 'Live provision from provider agent. The SSH user is removed when the reservation ends. No payment collected yet.',
+    note: body.note || 'Live provision from provider agent. The SSH user is removed when the reservation ends.',
   };
   schedulePersist();
   mailReservationEvent(r, 'access_ready');

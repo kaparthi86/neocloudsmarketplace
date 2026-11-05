@@ -1,6 +1,6 @@
 # Neo Clouds — System Design Document
 
-**Status:** Design record. The running product no longer serves this page, seeded listings, the leaderboard, the provider waitlist, or one-click attest. The catalog includes fixed simulated example machines and a canned model preview; those do not open a machine.  
+**Status:** Design record. The running product no longer serves this page, seeded listings, the leaderboard, the provider waitlist, or one-click attest. The catalog includes fixed simulated example machines and a canned model preview.  
 **Canonical site:** https://neocloudsmarketplace.com  
 **Aligned paper:** `papers/neo-clouds-unused-accelerator-marketplace.md` (research preprint; open/merge that PR if not on `main` yet)  
 **Hardware connect guide:** [HARDWARE.md](./HARDWARE.md)  
@@ -39,7 +39,7 @@ This document describes the **control-plane architecture** for an open marketpla
 2. **Thin provider integration.** A host-side `neo-agent` is enough to go live—no requirement to run a full orchestrator on day one.
 3. **Availability is derived, not stored as gospel.** Listing “available” is computed from node attestation, heartbeat TTL, and reservation conflicts.
 4. **Workload-aware discovery.** Catalog axes are hardware × workload tags × price—not SKU-only.
-5. **Honest early access.** UI and API advertise simulated vs live; no payment collection.
+5. **Catalog truth.** Simulated examples and live nodes stay distinct.
 
 ---
 
@@ -338,8 +338,6 @@ No separate Postgres/queue yet; acceptable for early access single-node control 
 | Key leakage | Bearer API keys, rotate + email recovery | Scoped keys, OAuth |
 | Inventory spoofing across providers | `provider_id` ownership checks | Stronger identity + payout KYC when payments land |
 
-**Payments:** explicitly disabled. Listed prices are discovery signals only.
-
 ---
 
 ## 11. Deployment architecture
@@ -420,7 +418,7 @@ flowchart TB
 | Concern | Approach |
 |---|---|
 | Correctness | `npm test` (`test/*.test.js`, concurrency 1) |
-| Honesty signals | Beta banner, `simulated` flags, `/api/config` |
+| Catalog labels | `simulated` flags on example rows |
 | Observability | `/api/health` counters (`liveNodes`, `onlineLiveNodes`) |
 | Docs | `HARDWARE.md`, `LAUNCH.md`, this design doc, preprint |
 
