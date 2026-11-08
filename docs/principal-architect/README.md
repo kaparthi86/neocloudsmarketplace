@@ -17,6 +17,8 @@ Neo Clouds is an open marketplace for spare GPUs and TPUs. A provider attaches a
 
 The original technical work is the trust split: attestation proves which host answered, a heartbeat proves it is still online, and a per-reservation SSH user is created on ack and removed when the hold ends. Example machines and model previews are fixed catalog rows. They do not call a model provider and they do not open a host.
 
+**PDF:** [Neo-Clouds-Principal-Architect-Packet.pdf](./Neo-Clouds-Principal-Architect-Packet.pdf)
+
 ## Evidence map
 
 | Review area | What a principal packet needs | Where it is | Status |
