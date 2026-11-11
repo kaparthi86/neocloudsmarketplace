@@ -7,7 +7,7 @@
 3. Spare accelerators shouldn’t sit dark while teams wait on quotes
 
 **Tone:** executive · ~900 words · paste into LinkedIn Article  
-**CTA:** neocloudsmarketplace.com · hellonecoloudsmarketplace@googlegroups.com  
+**CTA:** neocloudsmarketplace.com · neocloudsmarketplace.com/contact  
 **PDF:** [linkedin-executive-article.pdf](./linkedin-executive-article.pdf) · HTML: `/linkedin-executive-article.html`
 
 ---
@@ -83,7 +83,7 @@ If you run unused accelerators, or you are accountable for getting AI teams unbl
 
 - Explore the marketplace: [neocloudsmarketplace.com](https://neocloudsmarketplace.com)  
 - Providers: start at the console / pilot path on the site  
-- Contact: **hellonecoloudsmarketplace@googlegroups.com**
+- Contact: [neocloudsmarketplace.com/contact](https://neocloudsmarketplace.com/contact.html)
 
 The next phase of AI infrastructure will not only be about who manufactures chips. It will be about who makes existing chips **reachable**.
 
@@ -104,7 +104,7 @@ Neo Clouds is an open marketplace to bring unused accelerators online: discovera
 Early access. Honest about simulated vs live. Payments still off.
 
 → neocloudsmarketplace.com  
-→ hellonecoloudsmarketplace@googlegroups.com
+→ neocloudsmarketplace.com/contact
 
 If you have spare H100s/TPUs — or you’re blocked waiting on capacity — I’d welcome a conversation.
 

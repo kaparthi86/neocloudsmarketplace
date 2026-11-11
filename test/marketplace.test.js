@@ -381,7 +381,8 @@ describe('7 – HTTP integration', async () => {
     assert.equal(contact.status, 200);
     const contactHtml = await contact.text();
     assert.match(contactHtml, /Contact/i);
-    assert.match(contactHtml, /investorsneoclouds@googlegroups.com/);
+    assert.match(contactHtml, /id="contact-form"/);
+    assert.equal(contactHtml.includes('googlegroups.com'), false);
     assert.match(contactHtml, /value="investor"/);
   });
 

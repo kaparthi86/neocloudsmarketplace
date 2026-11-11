@@ -63,7 +63,7 @@ Each record is a choice that is visible in the code on `main`. Dates are the rep
 **Date:** 1 Oct 2026, PR #16.  
 **Decision:** Contact intent `investor` is stored in the operator inbox and, when mail is configured, sent to `NEO_INVESTOR_EMAIL` (default `investorsneoclouds@googlegroups.com`). General notes go to the operator address.  
 **Why:** Investor mail and support mail are different readers.  
-**Consequence:** The contact page lists both addresses.
+**Consequence:** The contact page is a form. The addresses are delivery settings for that form, not a published contact method.
 
 ## ADR-010 — The site does not carry a disclaimer strip
 
