@@ -18,21 +18,6 @@
     margin-bottom: 14px;
   }
   .lede { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; max-width: 48ch; }
-  .contact-list { list-style: none; padding: 0; margin: 0 0 28px; }
-  .contact-list li { margin: 0 0 12px; }
-  .contact-label {
-    display: block;
-    font-size: 0.75rem;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 2px;
-  }
-  .contact-email {
-    color: var(--gold);
-    font-weight: 600;
-    text-decoration: none;
-  }
   .form-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -72,17 +57,7 @@
 
 <main class="page-wrap">
   <h1>Contact</h1>
-  <p class="lede">Providers with spare GPUs or TPUs, teams looking for compute, and investors.</p>
-  <ul class="contact-list">
-    <li>
-      <span class="contact-label">General</span>
-      <a class="contact-email" href="mailto:hellonecoloudsmarketplace@googlegroups.com">hellonecoloudsmarketplace@googlegroups.com</a>
-    </li>
-    <li>
-      <span class="contact-label">Investors</span>
-      <a class="contact-email" href="mailto:investorsneoclouds@googlegroups.com">investorsneoclouds@googlegroups.com</a>
-    </li>
-  </ul>
+  <p class="lede">Providers with spare GPUs or TPUs, teams looking for compute, and investors. Send a note with the form.</p>
 
   <div class="form-card">
     <form id="contact-form" onsubmit="return submitContact(event)">
@@ -108,7 +83,7 @@
         <textarea id="message" name="message" required maxlength="4000" placeholder="Tell us briefly what you have or need…"></textarea>
       </div>
       <button type="submit" class="btn btn-gold">Send message</button>
-      <p class="hint">This is saved in the operator inbox. When email delivery is configured, general notes go to the operator and investor notes go to investorsneoclouds@googlegroups.com.</p>
+      <p class="hint">Your note is saved for the operator.</p>
       <p id="form-status" class="status" role="status" aria-live="polite"></p>
     </form>
   </div>
@@ -155,7 +130,7 @@ async function submitContact(event) {
     form.reset();
   } catch (e) {
     status.className = 'status err';
-    status.textContent = e.message || 'Could not send. Email hellonecoloudsmarketplace@googlegroups.com or investorsneoclouds@googlegroups.com';
+    status.textContent = e.message || 'Could not send. Try the form again.';
   }
   return false;
 }
