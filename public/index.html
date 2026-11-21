@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Neo Clouds — open marketplace for unused GPUs and TPUs. Bring idle accelerators online at low cost. Early access.">
+<meta name="description" content="Neo Clouds — compare GPUs and TPUs from independent providers, then reserve a window on a machine whose agent is online.">
 <meta name="theme-color" content="#0d1117">
 <link rel="canonical" href="https://neocloudsmarketplace.com/">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -12,7 +12,7 @@
 <style>
   .home-hero {
     position: relative;
-    min-height: calc(100vh - 56px);
+    min-height: calc(100vh - 64px);
     display: flex;
     align-items: flex-end;
     padding: 48px 28px 64px;
@@ -102,8 +102,41 @@
     margin-bottom: 6px;
   }
   .pillar p { font-size: 0.9rem; margin: 0; }
+  .steps, .paths, .preview-grid { display: grid; gap: 16px; margin-top: 28px; }
+  .steps { grid-template-columns: repeat(3, 1fr); }
+  .paths { grid-template-columns: 1fr 1fr; }
+  .preview-grid { grid-template-columns: repeat(3, 1fr); }
+  .step, .path, .mini-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+  }
+  .step-no, .path h3, .mini-kicker {
+    color: var(--gold);
+    font-size: 0.75rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .step h3, .mini-card h3 { color: #fff; font-size: 1.05rem; font-weight: 600; margin-bottom: 6px; }
+  .step p, .path p, .mini-card p { font-size: 0.9rem; margin: 0; }
+  .path .cta-row { margin-top: 16px; }
+  .mini-card .price { color: var(--gold); font-size: 1.15rem; margin-top: 12px; }
+  .mini-meta { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+  .status-live, .status-example {
+    display: inline-block;
+    font-size: 0.68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-radius: 99px;
+    padding: 2px 8px;
+    border: 1px solid;
+  }
+  .status-live { color: var(--green); border-color: var(--green); }
+  .status-example { color: var(--muted); border-color: var(--border); }
   @media (max-width: 720px) {
-    .pillars { grid-template-columns: 1fr; }
+    .pillars, .steps, .paths, .preview-grid { grid-template-columns: 1fr; }
     .home-hero {
       min-height: 85vh;
       align-items: center;
@@ -118,7 +151,7 @@
 </head>
 <body>
 <nav class="site-nav">
-  <a class="logo" href="/">☁ Neo Clouds</a>
+  <a class="logo" href="/"><span class="mark"></span>Neo Clouds</a>
   <div class="nav-links">
     <a href="/" class="active">Home</a>
     <a href="/marketplace">Marketplace</a>
@@ -131,47 +164,100 @@
 <section class="home-hero">
   <div class="hero-inner">
     <div class="brand-mark">Neo Clouds</div>
-    <h1>Bring <em>unused compute</em> online</h1>
-    <p class="hero-support">An open marketplace for idle GPUs and TPUs from many providers — one hardware catalog, low cost, open source.</p>
+    <h1>Find a GPU or TPU. <em>Reserve the window.</em></h1>
+    <p class="hero-support">Compare hardware, region, and listed price from independent providers. A live machine stays reservable while its agent is online.</p>
     <div class="cta-row hero-actions">
       <a class="btn btn-gold" href="/marketplace">Explore marketplace</a>
       <a class="btn btn-outline" href="/console.html">List hardware</a>
     </div>
   </div>
-  <p class="hero-caption">Spare accelerators, one catalog.</p>
+  <p class="hero-caption">Unused compute, one catalog.</p>
 </section>
 
 <section class="home-section">
-  <h2>Open platform. Available hardware. Lower cost.</h2>
-  <p>Spare accelerators sit offline across clouds, labs, and colos while AI teams overpay or wait. Neo Clouds aggregates that unused capacity into one open exchange.</p>
-  <div class="pillars">
-    <div class="pillar">
-      <h3>Unused → online</h3>
-      <p>Providers list idle GPUs and TPUs. Buyers discover by hardware, workload, and price.</p>
-    </div>
-    <div class="pillar">
-      <h3>Low / min cost</h3>
-      <p>Transparent listed rates.</p>
-    </div>
-    <div class="pillar">
-      <h3>Open by design</h3>
-      <p>Open catalog, open APIs, open source — not locked inside a single cloud.</p>
-    </div>
+  <h2>How a reservation moves</h2>
+  <p>You see the hardware first. Access follows only after the provider agent confirms the hold.</p>
+  <div class="steps">
+    <article class="step">
+      <div class="step-no">01 · Discover</div>
+      <h3>Compare the machine</h3>
+      <p>Model, chip count, memory, interconnect, region, and listed hourly price.</p>
+    </article>
+    <article class="step">
+      <div class="step-no">02 · Request</div>
+      <h3>Reserve a window</h3>
+      <p>A live hold stays requested until the agent on that host acknowledges it.</p>
+    </article>
+    <article class="step">
+      <div class="step-no">03 · Connect</div>
+      <h3>Open the host</h3>
+      <p>The agent creates a user for that reservation and removes it when the window ends.</p>
+    </article>
+  </div>
+</section>
+
+<section class="home-section">
+  <h2>In the catalog now</h2>
+  <p>Live machines are listed first. Example rows stay in the catalog so you can see the shape of a listing.</p>
+  <div class="preview-grid" id="home-catalog">
+    <article class="mini-card"><p>Loading the catalog…</p></article>
+  </div>
+  <div class="cta-row" style="margin-top:18px">
+    <a class="btn btn-gold" href="/marketplace">Open the full catalog</a>
+    <a class="btn btn-outline" href="/contact.html?intent=customer">Request capacity</a>
   </div>
 </section>
 
 <section class="home-section" style="padding-bottom:24px">
-  <h2>Start here</h2>
-  <p>Browse the marketplace, list a machine from the provider console, or get in touch.</p>
-  <div class="cta-row" style="margin-top:18px">
-    <a class="btn btn-gold" href="/marketplace">Marketplace</a>
-    <a class="btn btn-outline" href="/about.html">About</a>
-    <a class="btn btn-outline" href="/contact.html">Contact</a>
+  <h2>Two ways in</h2>
+  <div class="paths">
+    <article class="path">
+      <h3>Buyers</h3>
+      <p>Find a configuration, reserve hours, and pick up access from My reservations when the agent is ready.</p>
+      <div class="cta-row">
+        <a class="btn btn-gold" href="/marketplace">Explore compute</a>
+      </div>
+    </article>
+    <article class="path">
+      <h3>Providers</h3>
+      <p>Register a live node, run neo-agent on the host, and publish a listing at your rate.</p>
+      <div class="cta-row">
+        <a class="btn btn-outline" href="/console.html">List hardware</a>
+      </div>
+    </article>
   </div>
 </section>
+<script>
+(function () {
+  const box = document.getElementById('home-catalog');
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  fetch('/v1/listings').then(r => r.json()).then(rows => {
+    if (!Array.isArray(rows) || !rows.length) {
+      box.innerHTML = '<article class="mini-card"><h3>Catalog is quiet</h3><p>Send a capacity request and a provider can answer from the console.</p></article>';
+      return;
+    }
+    const live = rows.filter(l => l.live === true);
+    const show = (live.length ? live : rows).slice(0, 3);
+    box.innerHTML = show.map(l => {
+      const kind = l.live === true ? '<span class="status-live">Live</span>' : '<span class="status-example">Example</span>';
+      return `<article class="mini-card">
+        <div class="mini-kicker">${kind}</div>
+        <h3>${esc(l.gpu_model)}</h3>
+        <p class="mini-meta">${esc(l.gpu_count)}× ${esc((l.accelerator_type || 'gpu').toUpperCase())} · ${esc(l.vram_gb)} GB · ${esc(l.interconnect)}</p>
+        <p class="mini-meta">${esc(l.region)}</p>
+        <div class="price">$${esc(l.price_per_hour)}<span style="color:var(--muted);font-size:.8rem"> /hr listed</span></div>
+      </article>`;
+    }).join('');
+  }).catch(() => {
+    box.innerHTML = '<article class="mini-card"><p>The catalog did not load. Open the marketplace to try again.</p></article>';
+  });
+})();
+</script>
 
 <footer class="site-footer">
-  <p>Neo Clouds · Early access · Open marketplace for unused compute</p>
+  <p>Neo Clouds · Open marketplace for unused compute</p>
   <p>
     <a href="/marketplace">Marketplace</a>
     <a href="/console.html">Console</a>

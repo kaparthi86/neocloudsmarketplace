@@ -8,36 +8,13 @@
 <link rel="stylesheet" href="/site.css">
 <title>Provider console — Neo Clouds</title>
 <style>
-  .wrap { max-width: 880px; margin: 0 auto; padding: 36px 24px 48px; }
-  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.4rem); color: #fff; margin-bottom: 8px; }
-  .lede { color: var(--muted); margin-bottom: 22px; max-width: 60ch; }
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
-  .panel h2 { font-size: 1rem; color: var(--gold); margin-bottom: 12px; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
-  label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
-  input, select {
-    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
-    padding: 8px 10px; color: var(--text); font-size: 0.9rem; font-family: var(--font);
-  }
-  .field { margin-bottom: 10px; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-  pre {
-    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-    padding: 12px; font-size: 0.75rem; overflow-x: auto; color: var(--text); margin-top: 10px;
-  }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; }
-  .ok { color: var(--green); }
-  .warn { color: var(--gold); }
-  .err { color: var(--red); }
-  .status { margin-top: 10px; font-size: 0.85rem; }
 </style>
 </head>
 <body>
 <nav class="site-nav">
-  <a class="logo" href="/">☁ Neo Clouds</a>
+  <a class="logo" href="/"><span class="mark"></span>Neo Clouds</a>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/marketplace">Marketplace</a>
@@ -47,9 +24,15 @@
   </div>
 </nav>
 
-<main class="wrap">
-  <h1>Provider console</h1>
-  <p class="lede">Onboard real hardware: save your provider key, register a <strong>live</strong> node, run <code>neo-agent</code>, then list it for customers.</p>
+<main class="page-wrap wide">
+  <h1>List a machine</h1>
+  <p class="lede">Four steps put a host in the catalog. Buyers can reserve it while the agent is heartbeating.</p>
+  <div class="lifecycle">
+    <span><strong>1</strong> Key</span>
+    <span><strong>2</strong> Node</span>
+    <span><strong>3</strong> Agent</span>
+    <span><strong>4</strong> Listing</span>
+  </div>
 
   <div class="panel">
     <h2>1. Provider API key</h2>
@@ -119,7 +102,7 @@ node scripts/neo-agent.mjs</pre>
 </main>
 
 <footer class="site-footer">
-  <p>Neo Clouds · Provider console</p>
+  <p>Neo Clouds · Open marketplace for unused compute</p>
   <p><a href="/marketplace">Marketplace</a><a href="/contact.html">Contact</a></p>
 </footer>
 

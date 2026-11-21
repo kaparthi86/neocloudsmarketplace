@@ -6,31 +6,22 @@
 <title>Operator inbox — Neo Clouds</title>
 <link rel="stylesheet" href="/site.css">
 <style>
-  main { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
-  h1 { font-family: var(--display); font-weight: 400; color: var(--gold); margin-bottom: 8px; }
-  h2 { margin: 28px 0 10px; font-size: 1.05rem; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
-  input { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 12px; min-width: 260px; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin: 8px 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin: 8px 0; }
   .alert { color: var(--gold); }
-  .muted { color: var(--muted); }
-  .err { color: var(--red); }
 </style>
 </head>
 <body>
 <nav class="site-nav">
-  <a class="logo" href="/">☁ Neo Clouds</a>
+  <a class="logo" href="/"><span class="mark"></span>Neo Clouds</a>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/marketplace">Marketplace</a>
     <a href="/admin" class="active">Inbox</a>
   </div>
 </nav>
-<main>
+<main class="page-wrap wide">
   <h1>Operator inbox</h1>
-  <p class="muted">Contact notes, provider waitlist, live-node heartbeats, and reservations still open.</p>
+  <p class="lede">Contact notes, live-node heartbeats, and reservations still open.</p>
   <div class="row">
     <input id="admin-key" type="password" placeholder="ADMIN_API_KEY" autocomplete="off">
     <button class="btn btn-gold" onclick="loadInbox()">Open inbox</button>

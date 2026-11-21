@@ -3,39 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Neo Clouds marketplace — browse unused GPUs and TPUs by hardware, workload, and price. Early access demo.">
+<meta name="description" content="Neo Clouds marketplace — compare GPUs and TPUs by hardware, workload, region, and listed price.">
 <meta name="theme-color" content="#0d1117">
 <link rel="canonical" href="https://neocloudsmarketplace.com/marketplace">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/site.css">
 <title>Marketplace — Neo Clouds</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --border: #30363d;
-    --text: #c9d1d9;
-    --muted: #8b949e;
-    --gold: #f0b429;
-    --gold-dim: #b8860b;
-    --green: #3fb950;
-    --blue: #58a6ff;
-    --red: #f85149;
-    --radius: 12px;
-  }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
-
-  /* NAV — site chrome in site.css; keep app subnav styles */
   .app-subnav { display: flex; gap: 8px; flex-wrap: wrap; }
-  .app-subnav a { padding: 6px 14px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 0.875rem; transition: color .2s, background .2s; }
-  .app-subnav a:hover, .app-subnav a.active { color: var(--text); background: rgba(255,255,255,.06); }
-  .logo { font-size: 1.2rem; font-weight: 700; color: var(--gold); letter-spacing: -0.5px; text-decoration: none; }
+  .app-subnav a { padding: 6px 14px; border-radius: 999px; color: var(--muted); text-decoration: none; font-size: 0.84rem; }
+  .app-subnav a:hover, .app-subnav a.active { color: #fff; background: rgba(255,255,255,.06); }
 
-  /* HERO */
-  .hero { text-align: center; padding: 56px 24px 32px; }
-  .hero h1 { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; color: #fff; margin-bottom: 12px; }
-  .hero p { color: var(--muted); font-size: 1.05rem; max-width: 640px; margin: 0 auto 28px; }
+  .hero { text-align: left; max-width: 720px; padding: 40px 24px 8px; margin: 0 auto; }
+  .hero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(2.2rem, 4.4vw, 3.2rem); color: #fff; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 12px; }
+  .hero p { color: var(--muted); font-size: 1.05rem; max-width: 46rem; margin: 0 0 8px; }
   .stats-strip { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
   .stat-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; font-size: 0.85rem; }
   .stat-pill span { color: var(--gold); font-weight: 600; }
@@ -52,8 +33,8 @@
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: box-shadow .2s, border-color .2s; }
   .card:hover { border-color: var(--gold-dim); box-shadow: 0 0 18px rgba(240,180,41,.12); }
   .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
-  .gpu-model { font-family: 'Courier New', monospace; font-size: 0.95rem; font-weight: 600; color: #fff; }
-  .price { font-family: 'Courier New', monospace; font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+  .gpu-model { font-size: 1.05rem; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
+  .price { font-size: 1.35rem; font-weight: 650; color: var(--gold); letter-spacing: -0.03em; }
   .price-unit { font-size: 0.75rem; color: var(--muted); }
   .badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
   .badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; border: 1px solid; }
@@ -65,14 +46,15 @@
   .badge-sim { border-color: var(--muted); color: var(--muted); }
   .meta { color: var(--muted); font-size: 0.8rem; margin: 4px 0; }
   .meta strong { color: var(--text); }
-
-  /* BUTTONS */
-  .btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: opacity .2s; }
-  .btn:hover { opacity: .85; }
-  .btn-gold { background: var(--gold); color: #000; }
-  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-  .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
-  .btn-filter.active, .btn-workload.active { border-color: var(--gold); color: var(--gold); background: rgba(240,180,41,.1); }
+  .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 12px 0 4px; }
+  .specs div { background: rgba(13,17,23,.45); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .specs dt { color: var(--muted); font-size: 0.68rem; letter-spacing: .06em; text-transform: uppercase; }
+  .specs dd { color: #fff; font-size: 0.86rem; margin: 2px 0 0; }
+  .empty-state { border: 1px dashed var(--border); border-radius: var(--radius); padding: 28px 22px; text-align: center; }
+  .empty-state h3 { color: #fff; font-weight: 500; margin-bottom: 8px; }
+  .lifecycle { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 18px; }
+  .lifecycle span { border: 1px solid var(--border); border-radius: 99px; padding: 4px 10px; font-size: 0.75rem; color: var(--muted); }
+  .lifecycle span strong { color: var(--gold); font-weight: 600; }
 
   /* CATALOG CONTROLS */
   .catalog-bar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -100,10 +82,7 @@
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 200; }
   .modal-overlay.hidden { display: none; }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: min(480px, 95vw); }
-  .modal h2 { margin-bottom: 16px; }
-  .form-group { margin-bottom: 14px; }
-  .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
-  .form-group input, .form-group textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-size: 0.9rem; }
+  .modal h2 { margin-bottom: 16px; font-family: var(--display); font-weight: 400; color: #fff; font-size: 1.7rem; }
   .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
 
   /* CHAT */
@@ -119,13 +98,9 @@
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   /* KEY SETUP */
-  .key-setup { background: var(--surface); border: 1px solid var(--gold-dim); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
-  .key-setup h3 { color: var(--gold); margin-bottom: 8px; font-size: 0.9rem; }
+  .key-setup { margin-bottom: 22px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
 
-  .notice { color: var(--muted); font-size: 0.8rem; margin: 0 0 12px; line-height: 1.45; }
-
-  footer { text-align: center; padding: 32px 16px 48px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 40px; }
-  footer a { color: var(--blue); text-decoration: none; margin: 0 8px; }
+  .catalog-row select, .catalog-row input { font-family: var(--font); }
 
   @media (max-width: 600px) {
     .card-grid { grid-template-columns: 1fr; }
@@ -136,7 +111,7 @@
 <body>
 
 <nav class="site-nav">
-  <a class="logo" href="/">☁ Neo Clouds</a>
+  <a class="logo" href="/"><span class="mark"></span>Neo Clouds</a>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/marketplace" class="active">Marketplace</a>
@@ -156,8 +131,8 @@
 <!-- Listings page -->
 <div id="page-listings" class="page active">
   <div class="hero">
-    <h1>GPU &amp; TPU Marketplace</h1>
-    <p>Live machines appear first, while a provider agent is online. Simulated rows are examples.</p>
+    <h1>Compare machines. Reserve a window.</h1>
+    <p>Live rows are hosts whose agent is online. Example rows show the catalog shape. Filter by hardware, workload, and price.</p>
   </div>
   <main>
     <div class="key-setup" id="key-setup-section">
@@ -198,14 +173,27 @@
       </div>
     </div>
     <div class="card-grid" id="listings-grid"></div>
-    <p id="listings-empty" style="color:var(--muted);display:none">No listings found.</p>
+    <div id="listings-empty" class="empty-state" style="display:none">
+      <h3>No machines match these filters</h3>
+      <p class="notice">Clear the filters, or tell us the configuration you need.</p>
+      <div class="cta-row" style="justify-content:center">
+        <button class="btn btn-outline" type="button" onclick="clearCatalogFilters()">Show all</button>
+        <a class="btn btn-gold" href="/contact.html?intent=customer">Request capacity</a>
+      </div>
+    </div>
   </main>
 </div>
 
 <div id="page-reservations" class="page">
   <main>
     <h2 style="margin-bottom:8px">My reservations</h2>
-    <p class="notice">Live reserves stay here until the provider agent sends connection details. Holds end when the window closes, or sooner if the agent never acks.</p>
+    <p class="notice">A live hold stays requested until the provider agent opens access. The host and key appear here. The agent removes that user when the window ends.</p>
+    <div class="lifecycle" aria-label="Reservation states">
+      <span><strong>1</strong> Requested</span>
+      <span><strong>2</strong> Access ready</span>
+      <span><strong>3</strong> Completed</span>
+      <span><strong>Ended</strong> if the agent goes quiet, the window passes, or you cancel</span>
+    </div>
     <div id="reservations-list"></div>
   </main>
 </div>
@@ -213,7 +201,7 @@
 <div id="page-models" class="page">
   <main>
     <h2 style="margin-bottom:8px">Example models</h2>
-    <p class="notice">These models sit on the simulated machines. Preview returns a canned reply.</p>
+    <p class="notice">Example model cards on the catalog machines. Preview returns a fixed reply.</p>
     <div class="card-grid" id="models-grid"></div>
   </main>
 </div>
@@ -497,6 +485,20 @@ function setMaxPrice(value) {
   loadListings();
 }
 
+function clearCatalogFilters() {
+  accelFilter = '';
+  workloadFilter = '';
+  priceSort = 'price_asc';
+  maxPrice = '';
+  const sort = document.getElementById('sort-price');
+  const max = document.getElementById('max-price');
+  if (sort) sort.value = 'price_asc';
+  if (max) max.value = '';
+  document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.toggle('active', btn.id === 'filter-all'));
+  document.querySelectorAll('.btn-workload').forEach(btn => btn.classList.toggle('active', (btn.dataset.workload || '') === ''));
+  loadListings();
+}
+
 function listingsQuery() {
   const params = new URLSearchParams();
   if (accelFilter) params.set('accelerator_type', accelFilter);
@@ -526,34 +528,36 @@ function listingCard(l) {
   const div = document.createElement('div');
   div.className = 'card';
   const isLive = l.live === true;
+  const offline = isLive && l.node_online === false;
   const modeBadge = isLive
-    ? '<span class="badge badge-live">LIVE</span>'
-    : '<span class="badge badge-sim">SIMULATED</span>';
-  const availLabel = l.available ? 'Available' : (isLive && l.node_online === false ? 'Agent offline' : 'In Use');
-  const reserveLabel = isLive ? 'Reserve' : 'Reserve (demo)';
+    ? (offline ? '<span class="badge badge-unavailable">Offline</span>' : '<span class="badge badge-live">Live</span>')
+    : '<span class="badge badge-sim">Example</span>';
+  const availLabel = l.available ? 'Open' : (offline ? 'Agent offline' : 'Held');
   div.innerHTML = `
     <div class="card-header">
       <div>
         <div class="gpu-model">${esc(l.gpu_model)}</div>
-        <div class="meta" style="margin-top:4px">${l.gpu_count}× ${(l.accelerator_type || 'gpu').toUpperCase()} · ${l.vram_gb}GB memory</div>
+        <div class="meta" style="margin-top:4px">${esc((l.tags || []).join(' · '))}</div>
       </div>
       <div style="text-align:right">
         <div class="price">$${esc(l.price_per_hour)}</div>
         <div class="price-unit">listed /hr</div>
       </div>
     </div>
+    <dl class="specs">
+      <div><dt>Chips</dt><dd>${esc(l.gpu_count)}× ${esc((l.accelerator_type || 'gpu').toUpperCase())}</dd></div>
+      <div><dt>Memory</dt><dd>${esc(l.vram_gb)} GB</dd></div>
+      <div><dt>Fabric</dt><dd>${esc(l.interconnect && l.interconnect !== 'none' ? l.interconnect : '—')}</dd></div>
+      <div><dt>Region</dt><dd>${esc(l.region)}</dd></div>
+    </dl>
     <div class="badges">
-      <span class="badge badge-interconnect">${esc((l.accelerator_type || 'gpu').toUpperCase())}</span>
-      ${l.interconnect !== 'none' ? `<span class="badge badge-interconnect">${esc(l.interconnect)}</span>` : ''}
-      ${l.spot ? '<span class="badge badge-spot">SPOT</span>' : ''}
       ${modeBadge}
       <span class="badge ${l.available ? 'badge-available' : 'badge-unavailable'}">${availLabel}</span>
+      ${l.spot ? '<span class="badge badge-spot">Spot</span>' : ''}
+      ${l.network_bandwidth_gbps ? `<span class="badge badge-interconnect">${esc(l.network_bandwidth_gbps)} Gbps</span>` : ''}
     </div>
-    <div class="meta">Region: <strong>${esc(l.region)}</strong></div>
-    ${l.network_bandwidth_gbps ? `<div class="meta">Network: <strong>${l.network_bandwidth_gbps} Gbps</strong></div>` : ''}
-    ${l.tags && l.tags.length ? `<div class="meta">Workload / tags: ${l.tags.map(t => `<span style="color:var(--blue)">${esc(t)}</span>`).join(', ')}</div>` : ''}
     <div style="margin-top:14px">
-      <button class="btn btn-gold btn-sm" ${!l.available ? 'disabled style="opacity:.4"' : ''} onclick="openReserve('${l.listing_id}','${esc(l.gpu_model)}','${l.price_per_hour}',${isLive})">${reserveLabel}</button>
+      <button class="btn btn-gold btn-sm" ${!l.available ? 'disabled style="opacity:.4"' : ''} onclick="openReserve('${l.listing_id}','${esc(l.gpu_model)}','${l.price_per_hour}',${isLive})">Reserve</button>
     </div>
   `;
   return div;
@@ -565,12 +569,12 @@ async function openReserve(listingId, gpuModel, price, isLive) {
   if (!ok) return;
   currentListingId = listingId;
   document.getElementById('reserve-info').textContent = info;
-  document.getElementById('reserve-modal-title').textContent = isLive ? 'Live reservation' : 'Simulated reservation';
+  document.getElementById('reserve-modal-title').textContent = isLive ? 'Reserve a live machine' : 'Reserve an example';
   const reserveNotice = document.getElementById('reserve-notice');
   reserveNotice.textContent = isLive
-    ? 'Live reserve waits for the provider neo-agent to ack access.'
-    : '';
-  reserveNotice.style.display = isLive ? '' : 'none';
+    ? 'The hold stays requested until the agent on this host confirms. Access shows under My reservations.'
+    : 'Example row. The catalog records the request.';
+  reserveNotice.style.display = '';
   document.getElementById('reserve-modal').classList.remove('hidden');
 }
 
@@ -663,7 +667,7 @@ async function loadModels() {
       div.innerHTML = `
         <div class="gpu-model" style="font-size:1rem">${esc(m.model_name)}</div>
         <div class="meta">${esc(m.model_family)} · ${(m.context_length || 0).toLocaleString()} tokens · ${esc(m.accelerator_model)}</div>
-        <div class="badges" style="margin-top:8px"><span class="badge badge-sim">SIMULATED</span></div>
+        <div class="badges" style="margin-top:8px"><span class="badge badge-sim">Example</span></div>
         <div class="meta">Input (listed): <strong style="color:var(--gold)">$${esc(m.input_price_per_1k_tokens)}/1K</strong></div>
         <div class="meta">Output (listed): <strong style="color:var(--gold)">$${esc(m.output_price_per_1k_tokens)}/1K</strong></div>
         <div style="margin-top:14px">
@@ -748,12 +752,11 @@ async function rotateKey() {
 // Helpers
 // ---------------------------------------------------------------------------
 function reservationState(r) {
-  if (r.status === 'pending_provision') return 'Waiting on the agent';
+  if (r.status === 'pending_provision') return 'Requested';
   if (r.status === 'active' && r.simulated === false) return 'Access ready';
-  if (r.status === 'completed' || r.status === 'cancelled') {
-    return r.cancellation_reason ? `Ended · ${r.cancellation_reason}` : 'Ended';
-  }
-  if (r.simulated) return 'Demo';
+  if (r.status === 'completed') return 'Completed';
+  if (r.status === 'cancelled') return r.cancellation_reason ? `Ended · ${r.cancellation_reason}` : 'Ended';
+  if (r.simulated) return 'Example';
   return r.status || '';
 }
 
@@ -767,7 +770,7 @@ function closeModal(id) {
 }
 </script>
 <footer class="site-footer">
-  <p>Neo Clouds Marketplace</p>
+  <p>Neo Clouds · Open marketplace for unused compute</p>
   <p>
     <a href="/">Home</a>
     <a href="/console.html">Console</a>

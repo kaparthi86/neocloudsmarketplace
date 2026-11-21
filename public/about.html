@@ -8,30 +8,10 @@
 <link rel="canonical" href="https://neocloudsmarketplace.com/about.html">
 <link rel="stylesheet" href="/site.css">
 <title>About — Neo Clouds</title>
-<style>
-  .page-wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 24px; }
-  .page-wrap h1 {
-    font-family: var(--display);
-    font-size: clamp(2rem, 4vw, 2.8rem);
-    font-weight: 400;
-    color: #fff;
-    margin-bottom: 14px;
-  }
-  .lede { color: var(--muted); font-size: 1.08rem; margin-bottom: 28px; max-width: 54ch; }
-  .page-wrap h2 {
-    font-size: 1.05rem;
-    color: var(--gold);
-    margin: 28px 0 10px;
-    font-weight: 600;
-  }
-  .page-wrap p { margin-bottom: 12px; color: var(--text); max-width: 58ch; }
-  .page-wrap ul { padding-left: 20px; margin: 8px 0 16px; }
-  .page-wrap li { margin: 8px 0; color: var(--text); }
-</style>
 </head>
 <body>
 <nav class="site-nav">
-  <a class="logo" href="/">☁ Neo Clouds</a>
+  <a class="logo" href="/"><span class="mark"></span>Neo Clouds</a>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/marketplace">Marketplace</a>
@@ -43,7 +23,7 @@
 
 <main class="page-wrap">
   <h1>About Neo Clouds</h1>
-  <p class="lede">We bring unused accelerators online — an open marketplace for available GPUs and TPUs at low cost.</p>
+  <p class="lede">Compare GPUs and TPUs from independent providers, then reserve a window on a machine whose agent is online.</p>
 
   <h2>The problem</h2>
   <p>AI demand for compute keeps rising, but a lot of capacity never reaches the market. Idle chips sit across neo-clouds, labs, and colos while teams chase quotes or overpay hyperscalers.</p>
@@ -60,8 +40,9 @@
   <p><strong>Providers</strong> with spare capacity who want another distribution channel.<br>
   <strong>Builders</strong> who need flexible accelerator access without owning a fleet.</p>
 
-  <h2>Stage</h2>
-  <p>Providers connect a machine from the <a href="/console.html">provider console</a> and neo-agent (heartbeat, attest, provision). Customers reserve that machine. The marketplace also shows simulated example machines and model previews so the catalog is visible before a live agent is online.</p>
+  <h2>A reservation</h2>
+  <p>Requested, while the provider agent confirms the hold. Access ready, with the host and key on My reservations. Completed, when the window ends. Ended, if you cancel, the window passes before access, or the agent goes quiet.</p>
+  <p>Example machines stay in the catalog beside live ones. Providers connect a host from the <a href="/console.html">console</a> with neo-agent.</p>
 
   <div class="cta-row" style="margin-top:28px">
     <a class="btn btn-gold" href="/marketplace">Explore marketplace</a>
@@ -71,7 +52,7 @@
 </main>
 
 <footer class="site-footer">
-  <p>Neo Clouds · Early access · Open marketplace for unused compute</p>
+  <p>Neo Clouds · Open marketplace for unused compute</p>
   <p>
     <a href="/">Home</a>
     <a href="/marketplace">Marketplace</a>
