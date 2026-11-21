@@ -105,6 +105,10 @@
   </p>
 </footer>
 <script>
+const contactIntent = new URLSearchParams(location.search).get('intent');
+if (['provider', 'customer', 'investor', 'other'].includes(contactIntent)) {
+  document.getElementById('intent').value = contactIntent;
+}
 async function submitContact(event) {
   event.preventDefault();
   const status = document.getElementById('form-status');
